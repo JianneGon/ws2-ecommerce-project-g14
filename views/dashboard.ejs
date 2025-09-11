@@ -1,0 +1,17 @@
+<h1 class="page-title">Welcome, <%= user.firstName %> <%= user.lastName %>!</h1>
+
+<div class="dashboard-info">
+  <p><strong>User ID:</strong> <%= user.userId %></p>
+  <p><strong>Email:</strong> <%= user.email %></p>
+  <p><strong>Email Verified:</strong> <%= user.isEmailVerified ? "Yes" : "No" %></p>
+  <p><strong>Role:</strong> <%= user.role %></p>
+  <p><strong>Status:</strong> Active</p>
+</div>
+
+<div class="dashboard-actions">
+  <a href="/users/edit/<%= user.userId %>" class="btn-edit">Edit Profile</a>
+
+  <% if (user.role === 'admin') { %>
+    <a href="/users/admin" class="btn-dashboard">Admin Panel</a>
+  <% } %>
+</div>

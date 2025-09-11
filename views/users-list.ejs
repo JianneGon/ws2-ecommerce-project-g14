@@ -1,0 +1,43 @@
+<h1 class="users-page-title">Registered Users</h1>
+
+<% if (users.length > 0) { %>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th style="width: 200px;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% users.forEach(user => { %>
+          <tr>
+            <td><%= user.firstName %> <%= user.lastName %></td>
+            <td><%= user.email %></td>
+            <td>
+              <div class="table-actions">
+                <button type="button" class="btn-action btn-edit"
+                        onclick="location.href='/users/edit/<%= user.userId || user._id %>'">
+                  Edit
+                </button>
+                <form action="/users/delete/<%= user.userId || user._id %>" method="POST" style="display:inline;">
+                  <button class="btn-action btn-delete" type="submit"
+                          onclick="return confirm('Delete this user?');">
+                    Delete
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+<% } else { %>
+  <p class="no-users-text">No users registered yet.</p>
+<% } %>
+
+<div class="register-user-link">
+  <a class="btn btn-primary" href="/users/register">Register another user</a>
+</div>
