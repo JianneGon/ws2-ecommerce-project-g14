@@ -1,0 +1,28 @@
+<h1 class="page-title">Add New Shoe</h1>
+
+<div class="form-container">
+  <form action="/products/add" method="POST" enctype="multipart/form-data" class="product-form">
+    <label for="name">Product Name:</label>
+    <input type="text" id="name" name="name" placeholder="Enter product name" required>
+
+    <label for="brand">Brand:</label>
+    <input type="text" id="brand" name="brand" placeholder="Enter brand" required>
+
+    <label for="price">Price:</label>
+    <input type="number" id="price" name="price" placeholder="Enter price" step="0.01" required>
+
+    <label for="stock">Stock:</label>
+    <input type="number" id="stock" name="stock" placeholder="Enter stock quantity" required>
+
+    <label for="description">Description:</label>
+    <textarea id="description" name="description" placeholder="Enter product description"></textarea>
+
+    <label for="image">Upload Image:</label>
+    <input type="file" id="image" name="image" accept="image/*">
+
+    <div class="form-buttons">
+      <button type="submit" class="btn-save">Save Product</button>
+      <a href="/products" class="btn-cancel">Back to Products</a>
+    </div>
+  </form>
+</div>

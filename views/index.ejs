@@ -1,0 +1,16 @@
+<section class="hero">
+  <div class="hero-content">
+    <h1 class="hero-title">Welcome to Commonwealth!</h1>
+    <p class="hero-subtitle">Step into something new.</p>
+
+    <div class="hero-actions">
+      <% if (!user) { %>
+        <a class="btn btn-edit" href="/users/register">Register</a>
+      <% } %>
+
+      <% if (user && user.role === 'admin') { %>
+        <a class="btn btn-primary" href="/users/list">View Users</a>
+      <% } %>
+    </div>
+  </div>
+</section>

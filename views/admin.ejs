@@ -1,0 +1,49 @@
+<h1 class="page-title">Admin Dashboard</h1>
+<p style="text-align:center;">Welcome, <%= currentUser.firstName %> (<%= currentUser.role %>)</p>
+
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>User ID</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Email Verified</th>
+        <th>Role</th>
+        <th>Status</th>
+        <th>Created</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% users.forEach(user => { %>
+        <tr>
+          <td><%= user.userId %></td>
+          <td>
+            <% if (user.firstName && user.lastName) { %>
+              <%= user.firstName %> <%= user.lastName %>
+            <% } else if (user.name) { %>
+              <%= user.name %>
+            <% } else { %>
+              <em>No name</em>
+            <% } %>
+          </td>
+          <td><%= user.email %></td>
+          <td><%= user.isEmailVerified ? "Yes" : "No" %></td>
+          <td><%= user.role || "customer" %></td>
+          <td><%= user.accountStatus %></td>
+          <td>
+            <% if (user.createdAt) { %>
+              <%= new Date(user.createdAt).toLocaleDateString() %>
+            <% } else { %>
+              N/A
+            <% } %>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+
+<div class="form-buttons">
+  <a href="/users/dashboard" class="btn-cancel">Back to Dashboard</a>
+</div>
