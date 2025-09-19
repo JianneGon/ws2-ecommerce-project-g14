@@ -1,6 +1,12 @@
 <h1 class="form-title">Login</h1>
 <p class="form-subtitle">Welcome back! Please enter your credentials:</p>
 
+<% if (typeof message !== "undefined" && message) { %>
+  <p style="color: red; font-weight: bold; text-align: center; margin-bottom: 10px;">
+    <%= message %>
+  </p>
+<% } %>
+
 <form action="/users/login" method="POST" class="login-form">
   <input type="email" id="email" name="email" placeholder="Email" required>
 

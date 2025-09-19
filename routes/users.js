@@ -137,7 +137,15 @@ router.get("/verify/:token", async (req, res) => {
 // Login
 // =======================
 router.get("/login", (req, res) => {
-  res.render("login", { title: "Login" });
+  let message = null;
+
+  if (req.query.message === "logout") {
+    message = "You have been logged out.";
+  } else if (req.query.message === "timeout") {
+    message = "Your session has expired. Please log in again.";
+  }
+
+  res.render("login", { title: "Login", message });
 });
 
 router.post("/login", async (req, res) => {
@@ -219,7 +227,7 @@ router.get("/logout", (req, res) => {
         backText: "Back to Dashboard"
       });
     }
-    res.redirect("/users/login");
+    res.redirect("/users/login?message=logout");
   });
 });
 
@@ -263,7 +271,7 @@ async function findUserById(db, id) {
 }
 
 // =======================
-// Edit User (admins can edit anyone, customers can edit self)
+// Edit User
 // =======================
 router.get("/edit/:id", isAuthenticated, async (req, res) => {
   try {
@@ -279,7 +287,6 @@ router.get("/edit/:id", isAuthenticated, async (req, res) => {
       });
     }
 
-    // allow admin OR same user
     if (req.session.user.role !== "admin" && req.session.user.userId !== user.userId) {
       return res.status(403).render("error", {
         title: "Access Denied",
@@ -314,7 +321,6 @@ router.post("/edit/:id", isAuthenticated, async (req, res) => {
       });
     }
 
-    // allow admin OR same user
     if (req.session.user.role !== "admin" && req.session.user.userId !== user.userId) {
       return res.status(403).render("error", {
         title: "Access Denied",
@@ -336,14 +342,12 @@ router.post("/edit/:id", isAuthenticated, async (req, res) => {
       }
     );
 
-    // always update session if editing own account (admin or customer)
     if (req.session.user.userId === user.userId) {
       req.session.user.firstName = req.body.firstName;
       req.session.user.lastName = req.body.lastName;
       req.session.user.email = req.body.email;
     }
 
-    // redirect admin to user list, customer back to dashboard
     if (req.session.user.role === "admin") {
       res.redirect("/users/list");
     } else {

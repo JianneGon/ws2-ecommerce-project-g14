@@ -1,7 +1,7 @@
 // middlewares/auth.js
 function isAuthenticated(req, res, next) {
   if (!req.session.user) {
-    return res.redirect("/users/login");
+    return res.redirect("/users/login?message=timeout");
   }
   next();
 }
