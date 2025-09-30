@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    body { 
+      font-family: 'Montserrat', sans-serif; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      height: 100vh; 
+      margin: 0; 
+      background: #f8f8f8; 
+    }
+    .error-container { 
+        text-align: center; 
+    }
+    h1 { 
+        font-size: 4.5rem; 
+        margin: 0; 
+        color: black; 
+    }
+    p { 
+        font-size: 1.2rem; 
+        color: #666;
+        margin-bottom: 1.5rem; 
+    }
+    .links { 
+        display: flex; 
+        justify-content: center; 
+        gap: 12px; 
+        flex-wrap: wrap; 
+    }
+    .links a {
+      padding: 10px 20px;
+      background: #fff;
+      color: blue;
+      border: 2px solid #0055ff;
+      text-decoration: none;
+      border-radius: 5px;
+      transition: background 0.3s ease;
+    }
+    .links a:hover { 
+        background: #0055ff;
+        color: #fff;
+        transform: translateY(-2px);
+    }
+    .links a.primary { 
+        background: white; 
+        
+    }
+    .links a.primary:hover { 
+        background: #1d4ed8; 
+    }
+  </style>
+</head>
+<body>
+  <div class="error-container">
+    <h1>404 — Page Not Found</h1>
+    <p>Sorry, the page you are looking for does not exist.</p>
+
+    <div class="links">
+      <a class="primary" href="/">Go to Home</a>
+      <% if (user) { %>
+        <a href="/users/dashboard">Dashboard</a>
+        <a href="/users/logout">Logout</a>
+      <% } else { %>
+        <a href="/users/login">Login</a>
+        <a href="/users/register">Register</a>
+      <% } %>
+    </div>
+  </div>
+</body>
+</html>

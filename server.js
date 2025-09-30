@@ -34,10 +34,9 @@ app.use(session({
   rolling: true,                  
   cookie: { 
     secure: false,                
-    maxAge: 1 * 60 * 1000        // 15 minutes (adjust as needed)
+    maxAge: 15 * 60 * 1000        // 15 minutes
   }
 }));
-
 
 // Make session user available to all views
 app.use((req, res, next) => {
@@ -56,7 +55,15 @@ const passwordRoute = require('./routes/password');
 app.use('/', indexRoute);
 app.use('/users', usersRoute);
 app.use('/products', productsRoute);
-app.use('/password', passwordRoute);                 
+app.use('/password', passwordRoute);
+
+// =============
+// 404 Handler 
+// =============
+app.use((req, res) => {
+  res.set('Cache-Control', 'no-store'); // avoid caching of 404s
+  res.status(404).render('404', { title: "Page Not Found", layout: false });
+});
 
 // =======================
 // MongoDB Setup
