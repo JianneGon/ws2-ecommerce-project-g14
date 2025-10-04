@@ -16,7 +16,9 @@ const PORT = process.env.PORT || 3000;
 console.log("NODE_ENV:", process.env.NODE_ENV);
 console.log("MONGO_URI at runtime:", process.env.MONGO_URI);
 
+// =======================
 // Middleware
+// =======================
 app.use(bodyParser.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
 app.use(expressLayouts);
@@ -31,7 +33,7 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'dev-secret',
   resave: false,
   saveUninitialized: false,
-  rolling: true,                  
+  rolling: true,
   cookie: { 
     secure: false,                
     maxAge: 15 * 60 * 1000        // 15 minutes
@@ -57,12 +59,22 @@ app.use('/users', usersRoute);
 app.use('/products', productsRoute);
 app.use('/password', passwordRoute);
 
+
 // =============
 // 404 Handler 
 // =============
 app.use((req, res) => {
   res.set('Cache-Control', 'no-store'); // avoid caching of 404s
   res.status(404).render('404', { title: "Page Not Found", layout: false });
+});
+
+// =============
+// 500 Handler (last)
+// =============
+app.use((err, req, res, next) => {
+  console.error("Server Error:", err.stack);
+  if (res.headersSent) return next(err);
+  res.status(500).render('500', { title: "Server Error", layout: false, req });
 });
 
 // =======================
