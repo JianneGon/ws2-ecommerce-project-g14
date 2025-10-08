@@ -1,0 +1,38 @@
+<section class="store-details">
+  <div class="store-container">
+
+    <!-- Title + Address -->
+    <h1 class="store-branch-title"><%= store.name %></h1>
+    <div class="store-branch-divider"></div>
+    <p class="store-address"><%= store.location %></p>
+
+    <!-- Hero Image -->
+    <div class="store-main-image">
+      <img src="<%= store.image %>" alt="<%= store.name %>">
+    </div>
+
+    <!-- Description -->
+    <% if (store.description && store.description.trim().length > 0) { %>
+      <p class="store-description"><%- store.description %></p>
+    <% } else { %>
+      <p class="store-description">More details to come...</p>
+    <% } %>
+
+    <!-- Two-Image Gallery -->
+    <% if (store.gallery && store.gallery.length > 0) { %>
+      <div class="store-gallery">
+        <% store.gallery.forEach((img) => { %>
+          <div class="gallery-item">
+            <img src="<%= img %>" alt="Gallery for <%= store.name %>">
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+
+    <!-- Back Link -->
+    <div class="back-link">
+      <a href="/stores" class="btn-back">← Back to all stores</a>
+    </div>
+
+  </div>
+</section>

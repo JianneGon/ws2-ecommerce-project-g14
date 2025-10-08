@@ -6,6 +6,7 @@ const { v4: uuidv4 } = require("uuid");
 const bcrypt = require("bcrypt");
 const { ObjectId } = require("mongodb");
 const { isAuthenticated, isAdmin } = require("../middlewares/auth");
+const verifyTurnstile = require("../utils/turnstileVerify"); // ✅ added
 const saltRounds = 12;
 
 // =======================
@@ -17,6 +18,18 @@ router.get("/register", (req, res) => {
 
 router.post("/register", async (req, res) => {
   try {
+    // ✅ Verify Turnstile token first
+    const token = req.body["cf-turnstile-response"];
+    const result = await verifyTurnstile(token, req.ip);
+    if (!result.success) {
+      return res.render("error", {
+        title: "Verification Failed",
+        message: "Human verification failed. Please try again.",
+        backLink: "/users/register",
+        backText: "Back to Register",
+      });
+    }
+
     const db = req.app.locals.client.db(req.app.locals.dbName);
     const usersCollection = db.collection("users");
 
@@ -32,7 +45,7 @@ router.post("/register", async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(req.body.password, saltRounds);
     const currentDate = new Date();
-    const token = uuidv4();
+    const tokenId = uuidv4();
 
     const newUser = {
       userId: uuidv4(),
@@ -43,8 +56,8 @@ router.post("/register", async (req, res) => {
       role: "customer",
       accountStatus: "active",
       isEmailVerified: false,
-      verificationToken: token,
-      tokenExpiry: new Date(Date.now() + 3600000), // 1 hour expiry
+      verificationToken: tokenId,
+      tokenExpiry: new Date(Date.now() + 3600000),
       createdAt: currentDate,
       updatedAt: currentDate,
     };
@@ -52,7 +65,7 @@ router.post("/register", async (req, res) => {
     await usersCollection.insertOne(newUser);
 
     const baseUrl = process.env.BASE_URL || "http://localhost:3000";
-    const verificationUrl = `${baseUrl}/users/verify/${token}`;
+    const verificationUrl = `${baseUrl}/users/verify/${tokenId}`;
 
     await resend.emails.send({
       from: process.env.RESEND_FROM_EMAIL,
@@ -60,7 +73,7 @@ router.post("/register", async (req, res) => {
       subject: "Verify your account",
       html: `
         <h2>Welcome, ${newUser.firstName}!</h2>
-        <p>Thank you for registering. Please verify your email by clicking the link below:</p>
+        <p>Thank you for registering. Please verify your email by clicking below:</p>
         <a href="${verificationUrl}">${verificationUrl}</a>
       `,
     });
@@ -68,8 +81,7 @@ router.post("/register", async (req, res) => {
     res.render("success", {
       title: "Registration Successful",
       message: `User <strong>${newUser.firstName} ${newUser.lastName}</strong> has been registered.<br>
-                <strong>User ID:</strong> ${newUser.userId}<br><br>
-                A verification email has been sent to <strong>${newUser.email}</strong>. Please check your inbox.`,
+                A verification email has been sent to <strong>${newUser.email}</strong>.`,
       backLink: "/users/login",
       backText: "Back to Login",
     });
@@ -138,54 +150,61 @@ router.get("/verify/:token", async (req, res) => {
 // =======================
 router.get("/login", (req, res) => {
   let message = null;
-
-  if (req.query.message === "logout") {
-    message = "You have been logged out.";
-  } else if (req.query.message === "timeout") {
-    message = "Your session has expired. Please log in again.";
-  }
-
+  if (req.query.message === "logout") message = "You have been logged out.";
+  else if (req.query.message === "timeout") message = "Your session has expired. Please log in again.";
   res.render("login", { title: "Login", message });
 });
 
 router.post("/login", async (req, res) => {
   try {
+    // ✅ Verify Turnstile token first
+    const token = req.body["cf-turnstile-response"];
+    const result = await verifyTurnstile(token, req.ip);
+    if (!result.success) {
+      return res.render("error", {
+        title: "Verification Failed",
+        message: "Human verification failed. Please try again.",
+        backLink: "/users/login",
+        backText: "Back to Login",
+      });
+    }
+
     const db = req.app.locals.client.db(req.app.locals.dbName);
     const usersCollection = db.collection("users");
 
     const user = await usersCollection.findOne({ email: req.body.email });
     if (!user) {
-      return res.render("error", { 
-        title: "Login Error", 
+      return res.render("error", {
+        title: "Login Error",
         message: "User not found.",
         backLink: "/users/login",
-        backText: "Back to Login"
+        backText: "Back to Login",
       });
     }
     if (user.accountStatus !== "active") {
-      return res.render("error", { 
-        title: "Login Error", 
+      return res.render("error", {
+        title: "Login Error",
         message: "Account is not active.",
         backLink: "/users/login",
-        backText: "Back to Login"
+        backText: "Back to Login",
       });
     }
     if (!user.isEmailVerified) {
-      return res.render("error", { 
-        title: "Login Error", 
+      return res.render("error", {
+        title: "Login Error",
         message: "Please verify your email before logging in.",
         backLink: "/users/login",
-        backText: "Back to Login"
+        backText: "Back to Login",
       });
     }
 
     const isPasswordValid = await bcrypt.compare(req.body.password, user.passwordHash || "");
     if (!isPasswordValid) {
-      return res.render("error", { 
-        title: "Login Error", 
+      return res.render("error", {
+        title: "Login Error",
         message: "Invalid password.",
         backLink: "/users/login",
-        backText: "Back to Login"
+        backText: "Back to Login",
       });
     }
 
@@ -205,7 +224,7 @@ router.post("/login", async (req, res) => {
       title: "Login Error",
       message: "Something went wrong during login.",
       backLink: "/users/login",
-      backText: "Back to Login"
+      backText: "Back to Login",
     });
   }
 });
@@ -224,7 +243,7 @@ router.get("/logout", (req, res) => {
         title: "Logout Error",
         message: "Something went wrong during logout.",
         backLink: "/users/dashboard",
-        backText: "Back to Dashboard"
+        backText: "Back to Dashboard",
       });
     }
     res.redirect("/users/login?message=logout");
@@ -232,7 +251,7 @@ router.get("/logout", (req, res) => {
 });
 
 // =======================
-// Admin Dashboard
+// Admin Dashboard (optional display)
 // =======================
 router.get("/admin", isAdmin, async (req, res) => {
   const db = req.app.locals.client.db(req.app.locals.dbName);
@@ -241,15 +260,61 @@ router.get("/admin", isAdmin, async (req, res) => {
 });
 
 // =======================
-// User List (Admin Only)
+// Helper to find user (by userId string OR _id ObjectId)
 // =======================
-router.get("/list", isAuthenticated, isAdmin, async (req, res) => {
+async function findUserById(db, id) {
+  const usersCollection = db.collection("users");
+  const oid = ObjectId.isValid(id) ? new ObjectId(id) : null;
+
+  const user = await usersCollection.findOne({
+    $or: [
+      { userId: String(id) },
+      ...(oid ? [{ _id: oid }] : []),
+    ],
+  });
+
+  return user || null;
+}
+
+// =======================
+// User List (Admin Only) — with q + role filter
+// =======================
+router.get("/list", isAdmin, async (req, res) => {
   try {
     const db = req.app.locals.client.db(req.app.locals.dbName);
     const usersCollection = db.collection("users");
 
-    const users = await usersCollection.find().toArray();
-    res.render("users-list", { title: "Registered Users", users });
+    const q = (req.query.q || "").trim();
+    const role = (req.query.role || "all").toLowerCase(); // all | admin | customer
+
+    const filter = {};
+
+    if (q) {
+      filter.$or = [
+        { email: { $regex: q, $options: "i" } },
+        { firstName: { $regex: q, $options: "i" } },
+        { lastName: { $regex: q, $options: "i" } },
+        { role: { $regex: q, $options: "i" } },
+      ];
+    }
+
+    if (role !== "all") {
+      filter.role = role; // exact match: 'admin' or 'customer'
+    }
+
+    const users = await usersCollection
+      .find(filter)
+      .project({ passwordHash: 0 })
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    res.render("users-list", {
+      title: "Registered Users",
+      users,
+      q,
+      role,
+      total: users.length,
+    });
   } catch (err) {
     res.render("error", { 
       title: "User List Error", 
@@ -261,17 +326,7 @@ router.get("/list", isAuthenticated, isAdmin, async (req, res) => {
 });
 
 // =======================
-// Helper to find user
-// =======================
-async function findUserById(db, id) {
-  const usersCollection = db.collection("users");
-  return await usersCollection.findOne({
-    $or: [{ userId: id }, { _id: ObjectId.isValid(id) ? new ObjectId(id) : null }],
-  });
-}
-
-// =======================
-// Edit User
+// Edit User (GET) — keep variable name `user` for your EJS
 // =======================
 router.get("/edit/:id", isAuthenticated, async (req, res) => {
   try {
@@ -307,12 +362,16 @@ router.get("/edit/:id", isAuthenticated, async (req, res) => {
   }
 });
 
+// =======================
+// Update User (POST) — self or admin
+// =======================
 router.post("/edit/:id", isAuthenticated, async (req, res) => {
   try {
     const db = req.app.locals.client.db(req.app.locals.dbName);
-    const user = await findUserById(db, req.params.id);
+    const usersCol = db.collection("users");
+    const target = await findUserById(db, req.params.id);
 
-    if (!user) {
+    if (!target) {
       return res.render("error", { 
         title: "Update Error", 
         message: "User not found.",
@@ -321,7 +380,7 @@ router.post("/edit/:id", isAuthenticated, async (req, res) => {
       });
     }
 
-    if (req.session.user.role !== "admin" && req.session.user.userId !== user.userId) {
+    if (req.session.user.role !== "admin" && req.session.user.userId !== target.userId) {
       return res.status(403).render("error", {
         title: "Access Denied",
         message: "You can only edit your own profile.",
@@ -330,8 +389,8 @@ router.post("/edit/:id", isAuthenticated, async (req, res) => {
       });
     }
 
-    await db.collection("users").updateOne(
-      { _id: user._id },
+    await usersCol.updateOne(
+      { _id: target._id },
       {
         $set: {
           firstName: req.body.firstName,
@@ -342,7 +401,8 @@ router.post("/edit/:id", isAuthenticated, async (req, res) => {
       }
     );
 
-    if (req.session.user.userId === user.userId) {
+    // refresh session if self
+    if (req.session.user.userId === target.userId) {
       req.session.user.firstName = req.body.firstName;
       req.session.user.lastName = req.body.lastName;
       req.session.user.email = req.body.email;
@@ -364,14 +424,16 @@ router.post("/edit/:id", isAuthenticated, async (req, res) => {
 });
 
 // =======================
-// Delete User (Admin Only)
+// Delete User (Admin Only) — with safety checks
 // =======================
 router.post("/delete/:id", isAdmin, async (req, res) => {
   try {
     const db = req.app.locals.client.db(req.app.locals.dbName);
-    const user = await findUserById(db, req.params.id);
+    const usersCol = db.collection("users");
 
-    if (!user) {
+    const toDel = await findUserById(db, req.params.id);
+
+    if (!toDel) {
       return res.render("error", { 
         title: "Delete Error", 
         message: "User not found.",
@@ -380,7 +442,30 @@ router.post("/delete/:id", isAdmin, async (req, res) => {
       });
     }
 
-    await db.collection("users").deleteOne({ _id: user._id });
+    // prevent self-delete
+    if (req.session.user.userId === toDel.userId) {
+      return res.render("error", {
+        title: "Delete Blocked",
+        message: "Admins cannot delete their own account.",
+        backLink: "/users/list",
+        backText: "Back to User List",
+      });
+    }
+
+    // prevent deleting the last admin
+    if (toDel.role === "admin") {
+      const adminCount = await usersCol.countDocuments({ role: "admin" });
+      if (adminCount <= 1) {
+        return res.render("error", {
+          title: "Delete Blocked",
+          message: "You cannot delete the last remaining admin.",
+          backLink: "/users/list",
+          backText: "Back to User List",
+        });
+      }
+    }
+
+    await usersCol.deleteOne({ _id: toDel._id });
     res.redirect("/users/list");
   } catch (err) {
     res.render("error", { 

@@ -5,7 +5,8 @@
 </head>
 <body>
   <h1>Edit User</h1>
-  <form action="/users/edit/<%= user.userId %>" method="POST">
+
+  <form action="/users/edit/<%= (user.userId || (user._id && user._id.toString())) %>" method="POST">
     <label>First Name:</label>
     <input type="text" name="firstName" value="<%= user.firstName %>" required><br>
 

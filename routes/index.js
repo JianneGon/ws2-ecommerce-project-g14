@@ -4,14 +4,41 @@ const { Resend } = require('resend');
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 // =======================
-// Home Page
+// Home Page (with New Arrivals + Trending)
 // =======================
-router.get('/', (req, res) => {
-  res.render('index', {
-    message: "Welcome!",
-    title: "Home Page",
-    user: req.session ? req.session.user : null
-  });
+router.get('/', async (req, res) => {
+  try {
+    const db = req.app.locals.client.db(req.app.locals.dbName);
+    const productsCollection = db.collection('products');
+
+    // Fetch up to 20 latest products (New Arrivals)
+    const newArrivals = await productsCollection
+      .find({})
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .toArray();
+
+    // Fetch up to 20 random products (Trending)
+    const trending = await productsCollection
+      .aggregate([{ $sample: { size: 20 } }])
+      .toArray();
+
+    // Render homepage with both product groups
+    res.render('index', {
+      title: "Home Page",
+      user: req.session ? req.session.user : null,
+      newArrivals,
+      trending
+    });
+  } catch (err) {
+    console.error("❌ Error loading homepage:", err);
+    res.render("error", {
+      title: "Homepage Error",
+      message: "Something went wrong while loading the homepage.",
+      backLink: "/",
+      backText: "Back to Home"
+    });
+  }
 });
 
 // =======================
@@ -31,10 +58,10 @@ router.post('/contact', async (req, res) => {
   try {
     const { name, email, phone, message } = req.body;
 
-    // send email via Resend
+    // Send email via Resend
     await resend.emails.send({
-      from: "onboarding@resend.dev",            // always use this or a verified domain
-      to: process.env.CONTACT_TO_EMAIL,         // Gmail mo as recipient
+      from: "onboarding@resend.dev",            // Verified sender domain
+      to: process.env.CONTACT_TO_EMAIL,         // Gmail recipient
       subject: `New Contact Message from ${name}`,
       html: `
         <h2>Contact Form Submission</h2>
