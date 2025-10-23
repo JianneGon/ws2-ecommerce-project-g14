@@ -82,6 +82,13 @@ app.use('/', infoRouter);
 app.use('/', indexRoute);
 
 // =======================
+// Serve sitemap.xml from root
+// =======================
+app.get('/sitemap.xml', (req, res) => {
+  res.sendFile(path.join(__dirname, 'sitemap.xml'));
+});
+
+// =======================
 // 404 Handler
 // =======================
 app.use((req, res) => {
