@@ -1,0 +1,110 @@
+<h1 class="form-title">Register</h1>
+<p class="form-subtitle">Please fill in the information below:</p>
+
+<form action="/users/register" method="POST" class="register-form" id="registerForm">
+  <input type="text" id="firstName" name="firstName" placeholder="First Name" required>
+  <input type="text" id="lastName" name="lastName" placeholder="Last Name" required>
+  <input type="email" id="email" name="email" placeholder="Email" required>
+
+  <div class="password-wrapper">
+    <input type="password" name="password" id="password" placeholder="Password" required>
+    <button type="button" class="toggle-password" onclick="togglePassword()">Show</button>
+  </div>
+
+  <!-- Confirm Password -->
+  <input type="password" id="confirm" name="confirm" placeholder="Confirm Password" required>
+
+  <!-- Password Criteria (hidden by default) -->
+  <ul id="passwordCriteria" style="display:none;">
+    <li id="length">● At least 8 characters</li>
+    <li id="uppercase">● Includes uppercase letter</li>
+    <li id="lowercase">● Includes lowercase letter</li>
+    <li id="number">● Includes a number</li>
+    <li id="special">● Includes a special character (!@#$%^&*)</li>
+  </ul>
+
+  <!-- Turnstile widget added here -->
+  <div class="cf-turnstile" data-sitekey="<%= process.env.TURNSTILE_SITEKEY %>"></div>
+
+  <button type="submit" class="btn-register">Create My Account</button>
+</form>
+
+<style>
+  #passwordCriteria li {
+    color: red;
+    list-style: none;
+  }
+  #passwordCriteria li.valid {
+    color: green;
+  }
+</style>
+
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+
+<script>
+  const passwordInput = document.getElementById('password');
+  const confirmInput = document.getElementById('confirm');
+  const form = document.getElementById('registerForm');
+  const criteriaList = document.getElementById('passwordCriteria');
+
+  const criteria = {
+    length: document.getElementById('length'),
+    uppercase: document.getElementById('uppercase'),
+    lowercase: document.getElementById('lowercase'),
+    number: document.getElementById('number'),
+    special: document.getElementById('special')
+  };
+
+  // Show criteria while typing
+  passwordInput.addEventListener('focus', () => criteriaList.style.display = 'block');
+  passwordInput.addEventListener('blur', () => criteriaList.style.display = 'none');
+
+  // Real-time validation
+  passwordInput.addEventListener('input', () => {
+    const value = passwordInput.value;
+    criteria.length.classList.toggle('valid', value.length >= 8);
+    criteria.uppercase.classList.toggle('valid', /[A-Z]/.test(value));
+    criteria.lowercase.classList.toggle('valid', /[a-z]/.test(value));
+    criteria.number.classList.toggle('valid', /\d/.test(value));
+    criteria.special.classList.toggle('valid', /[!@#$%^&*(),.?":{}|<>]/.test(value));
+  });
+
+  // Prevent submission if weak or mismatched OR Turnstile missing
+  form.addEventListener('submit', (e) => {
+    const value = passwordInput.value;
+    const confirmValue = confirmInput.value;
+
+    const isValid =
+      value.length >= 8 &&
+      /[A-Z]/.test(value) &&
+      /[a-z]/.test(value) &&
+      /\d/.test(value) &&
+      /[!@#$%^&*(),.?":{}|<>]/.test(value);
+
+    if (!isValid) {
+      e.preventDefault();
+      alert("Password is weak or missing required criteria!");
+      return;
+    }
+
+    if (value !== confirmValue) {
+      e.preventDefault();
+      alert("Passwords do not match!");
+      return;
+    }
+
+    // Turnstile token check
+    const token = document.querySelector('[name="cf-turnstile-response"]')?.value;
+    if (!token) {
+      e.preventDefault();
+      alert("Please complete the human verification.");
+    }
+  });
+
+  // Toggle password visibility
+  function togglePassword() {
+    const type = passwordInput.type === "password" ? "text" : "password";
+    passwordInput.type = type;
+    confirmInput.type = type;
+  }
+</script>

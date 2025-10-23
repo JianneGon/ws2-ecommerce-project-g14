@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title><%= title %></title>
+</head>
+<body>
+  <h2>Registration Successful!</h2>
+  <p>User <strong><%= user.firstName %> <%= user.lastName %></strong> has been registered.</p>
+  <p><strong>User ID:</strong> <%= user.userId %></p>
+
+  <div class="info-container">
+  <h2><%= title %></h2>
+  <p><%= message %></p>
+
+  <% if (backLink && backText) { %>
+    <a href="<%= backLink %>" class="btn-cancel"><%= backText %></a>
+  <% } else { %>
+    <a href="javascript:history.back()" class="btn-cancel">Go Back</a>
+  <% } %>
+</div>
+
+</body>
+</html>

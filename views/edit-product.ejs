@@ -1,0 +1,31 @@
+<h1 class="page-title">Edit Product</h1>
+
+<div class="form-container">
+  <form action="/products/edit/<%= product.productId %>" method="POST" enctype="multipart/form-data" class="product-form">
+    <label for="name">Product Name:</label>
+    <input type="text" id="name" name="name" value="<%= product.name %>" placeholder="Enter product name" required>
+
+    <label for="brand">Brand:</label>
+    <input type="text" id="brand" name="brand" value="<%= product.brand %>" placeholder="Enter brand" required>
+
+    <label for="price">Price (₱):</label>
+    <input type="number" id="price" name="price" value="<%= product.price %>" step="0.01" min="0" placeholder="Enter price" required>
+
+    <label for="stock">Stock:</label>
+    <input type="number" id="stock" name="stock" value="<%= product.stock %>" min="0" placeholder="Enter stock quantity" required>
+
+    <label for="description">Description:</label>
+    <textarea id="description" name="description" rows="4" placeholder="Enter product description"><%= product.description %></textarea>
+
+    <label>Current Image:</label>
+    <img src="<%= product.imageUrl %>" alt="Product Image" style="max-width:150px; border-radius:6px; margin-bottom: 10px; display:block;">
+
+    <label for="image">Change Image:</label>
+    <input type="file" id="image" name="image" accept="image/*">
+
+    <div class="form-buttons">
+      <button type="submit" class="btn-save">Update Product</button>
+      <a href="/products" class="btn-cancel">Cancel</a>
+    </div>
+  </form>
+</div>

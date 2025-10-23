@@ -1,0 +1,77 @@
+<h1 class="users-page-title">Registered Users</h1>
+
+<!-- Centered search + role filter (same width as table) -->
+<div class="users-filter">
+  <form method="get" action="/users/list">
+    <input
+      type="text"
+      name="q"
+      value="<%= (typeof q !== 'undefined' ? q : '') %>"
+      placeholder="Search name/email/role"
+      aria-label="Search users"
+    />
+
+    <select name="role" aria-label="Filter by role">
+      <option value="all" <%= (!role || role === 'all') ? 'selected' : '' %>>All</option>
+      <option value="admin" <%= role === 'admin' ? 'selected' : '' %>>Admin</option>
+      <option value="customer" <%= role === 'customer' ? 'selected' : '' %>>Customer</option>
+    </select>
+
+    <div class="filter-actions">
+      <button type="submit" class="btn-primary">Search</button>
+      <% if (q || (role && role !== 'all')) { %>
+        <a href="/users/list" class="btn-cancel" style="text-decoration:none;">Clear</a>
+      <% } %>
+    </div>
+  </form>
+
+  <% if (typeof total !== 'undefined') { %>
+    <div class="users-filter-total">Total: <strong><%= total %></strong></div>
+  <% } %>
+</div>
+
+<% if (users && users.length > 0) { %>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Created</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th>Verified</th>
+          <th style="width: 220px;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% users.forEach(u => { 
+             const idVal = u.userId || (u._id && u._id.toString());
+        %>
+          <tr>
+            <td><%= u.createdAt ? new Date(u.createdAt).toLocaleString() : "-" %></td>
+            <td><%= u.firstName || "" %> <%= u.lastName || "" %></td>
+            <td><%= u.email %></td>
+            <td><%= u.role || "customer" %></td>
+            <td><%= u.accountStatus || "active" %></td>
+            <td><%= u.isEmailVerified ? "Yes" : "No" %></td>
+            <td>
+              <div class="table-actions">
+                <a class="btn-edit" href="/users/edit/<%= idVal %>">Edit</a>
+                <form action="/users/delete/<%= idVal %>" method="POST" onsubmit="return confirm('Delete this user?');" style="display:inline;">
+                  <button class="btn-delete" type="submit">Delete</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+<% } else { %>
+  <p class="no-users-text">No users registered yet.</p>
+<% } %>
+
+<div class="register-user-link">
+  <a class="btn btn-primary" href="/users/register">Register another user</a>
+</div>

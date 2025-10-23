@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= title || 'Home' %></title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+
+<body>
+  <!-- ==============================
+       HERO SLIDER SECTION
+  =============================== -->
+  <section class="hero-slider">
+    <div class="slides">
+      <div class="slide active" style="background-image: url('/images/slide1.jpg');"></div>
+      <div class="slide" style="background-image: url('/images/slide2.jpg');"></div>
+      <div class="slide" style="background-image: url('/images/slide3.jpg');"></div>
+      <div class="slide" style="background-image: url('/images/slide4.jpg');"></div>
+      <div class="slide" style="background-image: url('/images/slide5.jpg');"></div>
+      <div class="slide" style="background-image: url('/images/slide6.jpg');"></div>
+    </div>
+
+    <div class="dots">
+      <% for (let i = 0; i < 6; i++) { %>
+        <span class="dot <%= i === 0 ? 'active' : '' %>" onclick="showSlide(<%= i %>)"></span>
+      <% } %>
+    </div>
+  </section>
+
+  <!-- ==============================
+       PRODUCT SECTION WITH TABS
+  =============================== -->
+  <section class="product-section">
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="new">New Arrivals</button>
+      <button class="tab-btn" data-tab="trend">Trending</button>
+      <div class="tab-indicator"></div>
+    </div>
+
+    <!-- NEW ARRIVALS TAB -->
+    <div id="new" class="tab-content active">
+      <% if (newArrivals && newArrivals.length > 0) { %>
+        <div class="carousel-wrapper">
+          <button class="carousel-btn prev" onclick="changeSlide('new', -1)">‹</button>
+
+          <!-- 👇 Added viewport wrapper -->
+          <div class="carousel-viewport">
+            <div class="carousel new-carousel">
+              <% newArrivals.forEach(product => { %>
+                <div class="carousel-item">
+                  <img 
+                    src="<%= product.imageUrl %>" 
+                    alt="<%= product.name %>"
+                    onerror="this.onerror=null; this.src='/images/placeholder-shoe.jpg';"
+                  >
+                  <h3><%= product.name %></h3>
+                  <p class="brand"><%= product.brand %></p>
+                  <p class="price">₱<%= product.price.toLocaleString() %></p>
+                </div>
+              <% }) %>
+            </div>
+          </div>
+          <!-- 👆 End viewport wrapper -->
+
+          <button class="carousel-btn next" onclick="changeSlide('new', 1)">›</button>
+        </div>
+      <% } else { %>
+        <p class="no-products">No new arrivals available.</p>
+      <% } %>
+    </div>
+
+    <!-- TRENDING TAB -->
+    <div id="trend" class="tab-content">
+      <% if (trending && trending.length > 0) { %>
+        <div class="carousel-wrapper">
+          <button class="carousel-btn prev" onclick="changeSlide('trend', -1)">‹</button>
+
+          <!-- 👇 Added viewport wrapper -->
+          <div class="carousel-viewport">
+            <div class="carousel trend-carousel">
+              <% trending.forEach(product => { %>
+                <div class="carousel-item">
+                  <img 
+                    src="<%= product.imageUrl %>" 
+                    alt="<%= product.name %>"
+                    onerror="this.onerror=null; this.src='/images/placeholder-shoe.jpg';"
+                  >
+                  <h3><%= product.name %></h3>
+                  <p class="brand"><%= product.brand %></p>
+                  <p class="price">₱<%= product.price.toLocaleString() %></p>
+                </div>
+              <% }) %>
+            </div>
+          </div>
+          <!-- 👆 End viewport wrapper -->
+
+          <button class="carousel-btn next" onclick="changeSlide('trend', 1)">›</button>
+        </div>
+      <% } else { %>
+        <p class="no-products">No trending products available.</p>
+      <% } %>
+    </div>
+
+    <!-- VIEW ALL BUTTON -->
+    <div class="view-all">
+      <% if (!user) { %>
+        <a href="/users/register" class="btn-primary">View All Footwear</a>
+      <% } else { %>
+        <a href="/products" class="btn-primary">View All Footwear</a>
+      <% } %>
+    </div>
+  </section>
+
+  <!-- ==============================
+     BRAND SHOWCASE SECTION
+============================== -->
+<section class="brand-showcase">
+  <div class="brand-box">
+    <img src="/images/brand-nike.jpg" alt="Nike">
+    <div class="brand-overlay">
+      <p class="brand-subtitle">Brands You Love</p>
+      <h2 class="brand-title">Nike</h2>
+      <a href="#" class="brand-btn">Shop</a>
+    </div>
+  </div>
+
+  <div class="brand-box">
+    <img src="/images/brand-adidas.jpg" alt="Adidas">
+    <div class="brand-overlay">
+      <p class="brand-subtitle">Brands You Know</p>
+      <h2 class="brand-title">Adidas</h2>
+      <a href="#" class="brand-btn">Shop</a>
+    </div>
+  </div>
+</section>
+
+<!-- ==============================
+     SHOP BY BRAND SECTION
+============================== -->
+<section class="shop-by-brand">
+  <h2 class="section-title">Shop by Brand</h2>
+
+  <div class="brand-grid">
+    <a href="#" class="brand-item">
+      <img src="/images/brand-puma.jpg" alt="Puma Logo">
+      <div class="brand-logo"><img src="/images/logo-puma.png" alt="Puma Logo"></div>
+    </a>
+
+    <a href="#" class="brand-item">
+      <img src="/images/brand-nb.jpg" alt="New Balance">
+      <div class="brand-logo"><img src="/images/logo-nb.png" alt="New Balance Logo"></div>
+    </a>
+
+    <a href="#" class="brand-item">
+      <img src="/images/brand-asics.jpg" alt="asics">
+      <div class="brand-logo"><img src="/images/logo-asics.png" alt="Asics Logo"></div>
+    </a>
+
+    <a href="#" class="brand-item">
+      <img src="/images/brand-adidass.jpg" alt="Adidas">
+      <div class="brand-logo"><img src="/images/logo-adidas.png" alt="Adidas Logo"></div>
+    </a>
+  </div>
+</section>
+
+
+
+  <!-- ==============================
+       SCRIPTS
+  =============================== -->
+  <script>
+    // HERO SLIDER FUNCTION
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const dots = document.querySelectorAll('.dot');
+
+    function showSlide(index) {
+      slides.forEach((slide, i) => {
+        slide.classList.toggle('active', i === index);
+        dots[i].classList.toggle('active', i === index);
+      });
+      currentSlide = index;
+    }
+
+    setInterval(() => {
+      currentSlide = (currentSlide + 1) % slides.length;
+      showSlide(currentSlide);
+    }, 5000);
+
+    // FIXED CAROUSEL FUNCTION — hides buttons at ends
+    let currentNew = 0;
+    let currentTrend = 0;
+    const itemsPerPage = 4;
+
+    function changeSlide(type, dir) {
+      const wrapper = document.querySelector(
+        type === "new" ? ".new-carousel" : ".trend-carousel"
+      );
+      const prevBtn = wrapper.closest(".carousel-wrapper").querySelector(".carousel-btn.prev");
+      const nextBtn = wrapper.closest(".carousel-wrapper").querySelector(".carousel-btn.next");
+      const totalItems = wrapper.children.length;
+      const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+      let currentIndex = type === "new" ? currentNew : currentTrend;
+      currentIndex += dir;
+
+      if (currentIndex < 0) currentIndex = 0;
+      if (currentIndex >= totalPages - 1) currentIndex = totalPages - 1;
+
+      wrapper.style.transform = `translateX(-${currentIndex * 100}%)`;
+
+      if (type === "new") currentNew = currentIndex;
+      else currentTrend = currentIndex;
+
+      prevBtn.style.display = currentIndex === 0 ? "none" : "flex";
+      nextBtn.style.display = currentIndex === totalPages - 1 ? "none" : "flex";
+    }
+
+    window.addEventListener("load", () => {
+      document
+        .querySelectorAll(".carousel-wrapper")
+        .forEach((wrapper) => {
+          const carousel = wrapper.querySelector(".carousel");
+          const prevBtn = wrapper.querySelector(".carousel-btn.prev");
+          const nextBtn = wrapper.querySelector(".carousel-btn.next");
+          const totalItems = carousel.children.length;
+          const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+          if (prevBtn) prevBtn.style.display = "none";
+          if (nextBtn)
+            nextBtn.style.display = totalPages > 1 ? "flex" : "none";
+        });
+    });
+
+    // TAB SWITCHING FUNCTION
+    const tabs = document.querySelectorAll('.tab-btn');
+    const indicator = document.querySelector('.tab-indicator');
+    const contents = document.querySelectorAll('.tab-content');
+
+    function moveIndicator(target) {
+      const { offsetLeft, offsetWidth } = target;
+      indicator.style.left = offsetLeft + 'px';
+      indicator.style.width = offsetWidth + 'px';
+    }
+
+    tabs.forEach(btn => {
+      btn.addEventListener('click', () => {
+        tabs.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        moveIndicator(btn);
+
+        contents.forEach(c => c.classList.remove('active'));
+        document.getElementById(btn.dataset.tab).classList.add('active');
+      });
+    });
+
+    window.addEventListener('load', () => moveIndicator(document.querySelector('.tab-btn.active')));
+  </script>
+</body>
+</html>

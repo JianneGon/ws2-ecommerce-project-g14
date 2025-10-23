@@ -1,0 +1,40 @@
+<h1 class="products-page-title">Unbox Your Next Pair</h1>
+
+<% if (user && user.role === 'admin') { %>
+  <div class="button-container">
+    <a href="/products/add" class="btn btn-primary">Add New Shoe</a>
+  </div>
+<% } %>
+
+<div class="product-grid">
+  <% products.forEach(product => { %>
+    <div class="product-item">
+      <!-- Shoe Image -->
+      <img src="<%= product.imageUrl || '/images/placeholder-shoe.jpg' %>" alt="<%= product.name %>">
+
+      <!-- Product Info -->
+      <h2 class="product-name"><%= product.name %></h2>
+      <p class="product-brand"><%= product.brand %></p>
+      <p class="product-price">₱<%= product.price.toFixed(2) %></p>
+      <p class="product-stock">Stock: <%= product.stock %></p>
+      <p class="product-desc"><%= product.description %></p>
+
+      <!-- Admin Actions -->
+      <% if (user && user.role === 'admin') { %>
+        <div class="product-actions">
+          <a href="/products/edit/<%= product.productId %>" class="btn-action btn-edit">Edit</a>
+          <form action="/products/delete/<%= product.productId %>" method="POST" style="display:inline;" onsubmit="return confirm('Delete <%= product.name %>?');">
+            <button type="submit" class="btn-action btn-delete">Delete</button>
+          </form>
+        </div>
+      <% } %>
+
+      <!-- Customer Action -->
+    <% if (user && user.role === 'customer') { %>
+      <div class="product-actions">
+        <button type="button" class="btn-action btn-cart">Add to Cart</button>
+      </div>
+    <% } %>
+    </div>
+  <% }) %>
+</div>
