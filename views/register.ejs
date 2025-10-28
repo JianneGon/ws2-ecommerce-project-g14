@@ -23,6 +23,9 @@
     <li id="special">● Includes a special character (!@#$%^&*)</li>
   </ul>
 
+  <!-- ✅ Turnstile widget added here -->
+  <div class="cf-turnstile" data-sitekey="<%= process.env.TURNSTILE_SITEKEY %>"></div>
+
   <button type="submit" class="btn-register">Create My Account</button>
 </form>
 
@@ -35,6 +38,8 @@
     color: green;
   }
 </style>
+
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
 <script>
   const passwordInput = document.getElementById('password');
@@ -64,7 +69,7 @@
     criteria.special.classList.toggle('valid', /[!@#$%^&*(),.?":{}|<>]/.test(value));
   });
 
-  // Prevent submission if weak or mismatched
+  // Prevent submission if weak or mismatched OR Turnstile missing
   form.addEventListener('submit', (e) => {
     const value = passwordInput.value;
     const confirmValue = confirmInput.value;
@@ -85,6 +90,14 @@
     if (value !== confirmValue) {
       e.preventDefault();
       alert("Passwords do not match!");
+      return;
+    }
+
+    // ✅ Turnstile token check
+    const token = document.querySelector('[name="cf-turnstile-response"]')?.value;
+    if (!token) {
+      e.preventDefault();
+      alert("Please complete the human verification.");
     }
   });
 

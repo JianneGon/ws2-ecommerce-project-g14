@@ -1,42 +1,46 @@
+// =======================
+// Import Dependencies
+// =======================
 const express = require('express');
-const bodyParser = require('body-parser');
-const { MongoClient } = require('mongodb');
 const session = require('express-session');
+const bodyParser = require('body-parser');
 const expressLayouts = require('express-ejs-layouts');
+const { MongoClient } = require('mongodb');
+const path = require('path');
 
 // Only load .env locally
 if (process.env.NODE_ENV !== 'production') {
   require('dotenv').config();
 }
 
+// =======================
+// Create Express App
+// =======================
 const app = express();
 const PORT = process.env.PORT || 3000;
-
-// Debug logs
-console.log("NODE_ENV:", process.env.NODE_ENV);
-console.log("MONGO_URI at runtime:", process.env.MONGO_URI);
 
 // =======================
 // Middleware
 // =======================
 app.use(bodyParser.urlencoded({ extended: true }));
-app.set('view engine', 'ejs');
+app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname, 'public')));
+
 app.use(expressLayouts);
+app.set('view engine', 'ejs');
 app.set('layout', 'layouts/main');
 
-app.use(express.static('public')); // serve CSS, JS, images, uploads
-
 // =======================
-// Session setup with timeout
+// Session Setup
 // =======================
 app.use(session({
   secret: process.env.SESSION_SECRET || 'dev-secret',
   resave: false,
   saveUninitialized: false,
   rolling: true,
-  cookie: { 
-    secure: false,                
-    maxAge: 15 * 60 * 1000        // 15 minutes
+  cookie: {
+    secure: false,          // true only if HTTPS
+    maxAge: 15 * 60 * 1000  // 15 minutes
   }
 }));
 
@@ -47,30 +51,52 @@ app.use((req, res, next) => {
 });
 
 // =======================
+// Debug Info
+// =======================
+console.log("NODE_ENV:", process.env.NODE_ENV);
+console.log("MONGO_URI at runtime:", process.env.MONGO_URI);
+
+// =======================
+// MongoDB Setup
+// =======================
+const client = new MongoClient(process.env.MONGO_URI);
+app.locals.client = client;
+app.locals.dbName = process.env.DB_NAME || "ecommerceDB";
+
+// =======================
 // Routes
 // =======================
-const indexRoute = require('./routes/index');
 const usersRoute = require('./routes/users');
+const indexRoute = require('./routes/index');
 const productsRoute = require('./routes/products');
-const passwordRoute = require('./routes/password');   
+const passwordRoute = require('./routes/password');
+const storesRoute = require('./routes/stores');
+const infoRouter = require('./routes/info');
 
-app.use('/', indexRoute);
+// Order matters: more specific routes first
+app.use('/stores', storesRoute);
 app.use('/users', usersRoute);
 app.use('/products', productsRoute);
 app.use('/password', passwordRoute);
+app.use('/', infoRouter);
+app.use('/', indexRoute);
 
+// Serve sitemap.xml explicitly
+app.get('/sitemap.xml', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'sitemap.xml'));
+});
 
-// =============
-// 404 Handler 
-// =============
+// =======================
+// 404 Handler
+// =======================
 app.use((req, res) => {
-  res.set('Cache-Control', 'no-store'); // avoid caching of 404s
+  res.set('Cache-Control', 'no-store');
   res.status(404).render('404', { title: "Page Not Found", layout: false });
 });
 
-// =============
-// 500 Handler (last)
-// =============
+// =======================
+// 500 Handler
+// =======================
 app.use((err, req, res, next) => {
   console.error("Server Error:", err.stack);
   if (res.headersSent) return next(err);
@@ -78,15 +104,8 @@ app.use((err, req, res, next) => {
 });
 
 // =======================
-// MongoDB Setup
-// =======================
-const uri = process.env.MONGO_URI;
-const client = new MongoClient(uri);
-
-app.locals.client = client;
-app.locals.dbName = process.env.DB_NAME || "ecommerceDB";
-
 // Start Server
+// =======================
 async function main() {
   try {
     await client.connect();
@@ -96,6 +115,7 @@ async function main() {
       console.log(`🚀 Server running on port ${PORT}`);
     });
 
+    // Graceful shutdown
     process.on("SIGINT", async () => {
       console.log("Closing MongoDB connection...");
       await client.close();
@@ -106,4 +126,5 @@ async function main() {
     console.error("❌ MongoDB connection failed", err);
   }
 }
+
 main();
