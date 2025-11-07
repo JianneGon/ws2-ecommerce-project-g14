@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="Learn more about <%= name %> — web systems developer and student innovator.">
+  <meta name="keywords" content="about page, web systems, EJS, SEO, student project">
+  <meta name="author" content="<%= name %>">
+  <meta name="robots" content="index, follow">
+
+  <!-- Open Graph Meta Tags -->
+  <meta property="og:title" content="About <%= name %>">
+  <meta property="og:description" content="<%= description %>">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="/images/profile.png">
+
+  <!-- Twitter Card Meta Tag -->
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+  <header>
+    <h1>About <%= name %></h1>
+    <nav>
+      <a href="/">Home</a>
+      <a href="/about" aria-current="page">About</a>
+      <a href="/contact">Contact</a>
+    </nav>
+  </header>
+
+  <main>
+    <section>
+      <h2>Who I Am</h2>
+      <p><%= description %></p>
+    </section>
+  </main>
+
+  <footer>
+    <p>© <span id="year"><%= new Date().getFullYear() %></span> <%= name %>. All rights reserved.</p>
+  </footer>
+</body>
+
+</html>

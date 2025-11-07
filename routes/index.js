@@ -42,6 +42,18 @@ router.get('/', async (req, res) => {
 });
 
 // =======================
+// About Page (GET)
+// =======================
+router.get('/about', (req, res) => {
+  res.render('about', {
+    title: "About",
+    name: "Commonwealth", // <-- this fixes your EJS error
+    description: "We are an authentic sneaker reseller based in Manila",
+    user: req.session ? req.session.user : null
+  });
+});
+
+// =======================
 // Contact Page (GET)
 // =======================
 router.get('/contact', (req, res) => {

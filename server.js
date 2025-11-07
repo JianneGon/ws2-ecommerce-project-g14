@@ -24,6 +24,8 @@ const PORT = process.env.PORT || 3000;
 // =======================
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+
+// Serve static files from /public
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(expressLayouts);
@@ -39,7 +41,7 @@ app.use(session({
   saveUninitialized: false,
   rolling: true,
   cookie: {
-    secure: false,          // true only if HTTPS
+    secure: false,          // Set to true only if using HTTPS
     maxAge: 15 * 60 * 1000  // 15 minutes
   }
 }));
@@ -73,13 +75,14 @@ const passwordRoute = require('./routes/password');
 const storesRoute = require('./routes/stores');
 const infoRouter = require('./routes/info');
 
-// Order matters: more specific routes first
+// Route order matters: more specific routes first
 app.use('/stores', storesRoute);
 app.use('/users', usersRoute);
 app.use('/products', productsRoute);
 app.use('/password', passwordRoute);
-app.use('/', infoRouter);
-app.use('/', indexRoute);
+app.use('/', indexRoute);     // <-- indexRoute first
+app.use('/', infoRouter);     // <-- infoRouter second
+
 
 // =======================
 // Serve sitemap.xml from root
@@ -114,7 +117,7 @@ async function main() {
     console.log("✅ Connected to MongoDB Atlas");
 
     app.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`🚀 Server running on http://localhost:${PORT}`);
     });
 
     // Graceful shutdown
