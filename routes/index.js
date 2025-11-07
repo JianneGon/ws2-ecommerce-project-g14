@@ -47,7 +47,7 @@ router.get('/', async (req, res) => {
 router.get('/about', (req, res) => {
   res.render('about', {
     title: "About",
-    name: "Commonwealth", // <-- this fixes your EJS error
+    name: "Commonwealth", // 
     description: "We are an authentic sneaker reseller based in Manila",
     user: req.session ? req.session.user : null
   });
