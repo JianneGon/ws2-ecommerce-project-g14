@@ -1,0 +1,88 @@
+<main class="product-detail-container">
+
+  <!-- LEFT: BIG PRODUCT IMAGE -->
+  <div class="product-detail-image">
+    <img src="<%= product.imageUrl || '/images/placeholder-shoe.jpg' %>" alt="<%= product.name %>">
+  </div>
+
+  <!-- RIGHT: PRODUCT INFO -->
+  <div class="product-detail-info">
+
+    <h1 class="product-detail-title"><%= product.name %></h1>
+    <p class="product-detail-brand"><%= product.brand %></p>
+    <p class="product-detail-price">₱<%= product.price.toLocaleString() %></p>
+
+    <p class="product-detail-stock">
+      <% if (product.stock > 0) { %>
+        <span>In Stock: <%= product.stock %></span>
+      <% } else { %>
+        <span style="color: red;">Out of Stock</span>
+      <% } %>
+    </p>
+
+    <!-- CHECKOUT FORM (Lesson 20 Compliant) -->
+    <% if (product.stock > 0 && (!user || user.role === "customer")) { %>
+      <form action="/orders/checkout" method="GET" class="product-detail-cart-form">
+        <input type="hidden" name="productId" value="<%= product.productId %>">
+
+        <div class="product-qty-box">
+          <label for="qty">Quantity:</label>
+          <input 
+            type="number" 
+            id="qty" 
+            name="qty" 
+            value="1" 
+            min="1" 
+            max="<%= product.stock %>">
+        </div>
+
+        <button type="submit" class="btn-primary product-add-cart">
+          PROCEED TO CHECKOUT
+        </button>
+      </form>
+    <% } %>
+
+    <!-- ADMIN: EDIT PRODUCT BUTTON -->
+    <% if (user && user.role === "admin") { %>
+      <div style="margin-top: 20px;">
+        <a href="/products/edit/<%= product.productId %>" class="btn-edit">Edit Product</a>
+      </div>
+    <% } %>
+
+    <!-- TABS -->
+    <div class="product-tabs">
+      <button class="tab active" data-tab="desc">Description</button>
+      <button class="tab" data-tab="shipping">Shipping</button>
+      <button class="tab" data-tab="returns">Returns</button>
+    </div>
+
+    <div class="tab-content active" id="desc">
+      <p><%= product.description %></p>
+    </div>
+
+    <div class="tab-content" id="shipping">
+      <p>Shipping usually takes 3–7 business days depending on your location.</p>
+    </div>
+
+    <div class="tab-content" id="returns">
+      <p>We accept returns within 7 days as long as the item is unused and in original packaging.</p>
+    </div>
+
+  </div>
+
+</main>
+
+<script>
+  const tabs = document.querySelectorAll(".tab");
+  const contents = document.querySelectorAll(".tab-content");
+
+  tabs.forEach(tab => {
+    tab.addEventListener("click", () => {
+      tabs.forEach(t => t.classList.remove("active"));
+      contents.forEach(c => c.classList.remove("active"));
+
+      tab.classList.add("active");
+      document.getElementById(tab.dataset.tab).classList.add("active");
+    });
+  });
+</script>

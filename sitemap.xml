@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset 
+  xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+  <url>
+    <loc>https://ws2-ecommerce-project-g14-5.onrender.com/</loc>
+    <lastmod>2025-10-24T00:00:00+00:00</lastmod>
+    <priority>1.00</priority>
+  </url>
+
+  <url>
+    <loc>https://ws2-ecommerce-project-g14-5.onrender.com/products</loc>
+    <lastmod>2025-10-24T00:00:00+00:00</lastmod>
+    <priority>0.80</priority>
+  </url>
+
+  <url>
+    <loc>https://ws2-ecommerce-project-g14-5.onrender.com/about</loc>
+    <lastmod>2025-10-24T00:00:00+00:00</lastmod>
+    <priority>0.50</priority>
+  </url>
+
+  <url>
+    <loc>https://ws2-ecommerce-project-g14-5.onrender.com/contact</loc>
+    <lastmod>2025-10-24T00:00:00+00:00</lastmod>
+    <priority>0.50</priority>
+  </url>
+
+</urlset>

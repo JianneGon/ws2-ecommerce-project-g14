@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title><%= typeof title !== 'undefined' ? title : 'WS2 E-commerce' %></title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+  <!-- HEADER -->
+  <header class="navbar">
+    <a href="/" class="navbar-brand">Commonwealth</a>
+
+    <!-- Hamburger for mobile -->
+    <div class="hamburger" onclick="toggleMenu()">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+
+    <ul class="navbar-menu" id="navLinks">
+      <li><a href="/">Home</a></li>
+      <li><a href="/products">Shoes</a></li>
+      <li><a href="/about">About</a></li>
+
+      <!-- Admin-only: Manage Users -->
+      <% if (typeof user !== 'undefined' && user && user.role === 'admin') { %>
+        <li><a href="/users/list">Manage Users</a></li>
+      <% } %>
+
+      <li><a href="/contact">Contact</a></li>
+
+      <% if (typeof user !== 'undefined' && user) { %>
+        <li><a href="/users/dashboard">Dashboard</a></li>
+
+        <% if (user.role === 'customer') { %>
+          <!-- CUSTOMER: My Orders link -->
+          <li><a href="/orders">My Orders</a></li>
+        <% } %>
+
+        <% if (user.role === 'admin') { %>
+          <li><a href="/users/admin">Admin</a></li>
+
+          <!-- ADMIN: Orders Management link -->
+          <li><a href="/admin/orders">Orders</a></li>
+        <% } %>
+
+        <li><a href="/users/logout">Logout</a></li>
+
+      <% } else { %>
+        <li><a href="/users/register">Register</a></li>
+        <li><a href="/users/login">Login</a></li>
+      <% } %>
+    </ul>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <main class="page-content">
+    <%- body %>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-container">
+      
+      <!-- CONTACT -->
+      <div class="footer-column">
+        <h4>Contact</h4>
+        <ul>
+          <li><a href="/about">About Us</a></li>
+          <li><a href="/stores">Store Locations</a></li>
+          <li><a href="/contact">Get In Touch</a></li>
+        </ul>
+      </div>
+
+      <!-- SUPPORT -->
+      <div class="footer-column">
+        <h4>Support</h4>
+        <ul>
+          <li><a href="/terms">Terms & Conditions</a></li>
+          <li><a href="/privacy">Privacy Policy</a></li>
+          <li><a href="/faq">FAQs</a></li>
+          <li><a href="/shipping">Shipping</a></li>
+          <li><a href="/returns">Returns</a></li>
+        </ul>
+      </div>
+
+      <!-- NEWSLETTER -->
+      <div class="footer-column newsletter">
+        <h4>Newsletter</h4>
+        <form class="newsletter-form" onsubmit="return false;">
+          <input type="email" placeholder="Email Address" required />
+          <input type="text" placeholder="Shoe Size" />
+          <button type="submit">Subscribe</button>
+        </form>
+      </div>
+
+    </div>
+
+    <div class="footer-bottom">
+      <p>© 2025 Commonwealth | All Rights Reserved</p>
+    </div>
+  </footer>
+
+  <!-- Font Awesome -->
+  <script src="https://kit.fontawesome.com/a2e0ad1c42.js" crossorigin="anonymous"></script>
+
+  <script>
+    function toggleMenu() {
+      document.getElementById('navLinks').classList.toggle('show');
+    }
+    function togglePassword() {
+      const passwordInput = document.getElementById("password");
+      const toggleBtn = document.querySelector(".toggle-password");
+      if (passwordInput.type === "password") {
+        passwordInput.type = "text";
+        toggleBtn.textContent = "Hide";
+      } else {
+        passwordInput.type = "password";
+        toggleBtn.textContent = "Show";
+      }
+    }
+  </script>
+</body>
+</html>

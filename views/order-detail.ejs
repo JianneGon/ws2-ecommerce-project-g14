@@ -1,0 +1,50 @@
+<h1 class="page-title">Order <%= order.orderId %></h1>
+
+<div class="dashboard-info">
+  <p><strong>Status:</strong> <%= order.status %></p>
+  <p><strong>Placed on:</strong> <%= order.createdAt.toLocaleString() %></p>
+  <p><strong>Total Items:</strong> <%= order.totalQty %></p>
+  <p><strong>Total Amount:</strong> ₱<%= order.totalAmount.toFixed(2) %></p>
+</div>
+
+<h2 class="page-title" style="margin-top:30px;">Items</h2>
+
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th>Brand</th>
+        <th>Price</th>
+        <th>Qty</th>
+        <th>Subtotal</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% order.items.forEach(item => { %>
+        <tr>
+          <td><%= item.name %></td>
+          <td><%= item.brand %></td>
+          <td>₱<%= item.price.toFixed(2) %></td>
+          <td><%= item.quantity %></td>
+          <td>₱<%= item.subtotal.toFixed(2) %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+
+<h2 class="page-title" style="margin-top:30px;">Shipping Info</h2>
+
+<div class="dashboard-info">
+  <p><strong>Name:</strong> <%= order.shipping.fullName %></p>
+  <p><strong>Address:</strong> <%= order.shipping.addressLine1 %>, <%= order.shipping.addressLine2 %></p>
+  <p><strong>City:</strong> <%= order.shipping.city %></p>
+  <p><strong>Region:</strong> <%= order.shipping.region %></p>
+  <p><strong>Postal Code:</strong> <%= order.shipping.postalCode %></p>
+  <p><strong>Phone:</strong> <%= order.shipping.phone %></p>
+</div>
+
+<div class="dashboard-actions">
+  <a href="/orders" class="btn-back">Back to Orders</a>
+</div>

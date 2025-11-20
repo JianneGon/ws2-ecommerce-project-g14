@@ -1,0 +1,39 @@
+<h1 class="page-title">My Orders</h1>
+
+<% if (!orders || !orders.length) { %>
+  <p class="no-users-text">You have no orders yet.</p>
+  <p class="register-user-link">
+    <a href="/products" class="btn-primary">Start Shopping</a>
+  </p>
+<% } else { %>
+
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Order ID</th>
+          <th>Date</th>
+          <th>Items</th>
+          <th>Total</th>
+          <th>Status</th>
+          <th>View</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% orders.forEach(order => { %>
+          <tr>
+            <td><%= order.orderId %></td>
+            <td><%= order.createdAt.toLocaleString() %></td>
+            <td><%= order.totalQty %></td>
+            <td>₱<%= order.totalAmount.toFixed(2) %></td>
+            <td><%= order.status %></td>
+            <td>
+              <a href="/orders/<%= order.orderId %>" class="btn-edit">Details</a>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+
+<% } %>

@@ -1,0 +1,58 @@
+<% if (brand) { %>
+  <h1 class="products-page-title"><%= brand %> Shoes</h1>
+<% } else { %>
+  <h1 class="products-page-title">Unbox Your Next Pair</h1>
+<% } %>
+
+<% if (user && user.role === 'admin') { %>
+  <div class="button-container">
+    <a href="/products/add" class="btn btn-primary">Add New Shoe</a>
+  </div>
+<% } %>
+
+<div class="product-grid">
+  <% products.forEach(product => { %>
+    <div class="product-item">
+
+      <!-- CLICKABLE IMAGE -->
+      <a href="/products/<%= product.productId %>">
+        <img 
+          src="<%= product.imageUrl || '/images/placeholder-shoe.jpg' %>" 
+          alt="<%= product.name %>"
+        >
+      </a>
+
+      <!-- CLICKABLE NAME -->
+      <h2 class="product-name">
+        <a href="/products/<%= product.productId %>">
+          <%= product.name %>
+        </a>
+      </h2>
+
+      <!-- PRICE ONLY -->
+      <p class="product-price">₱<%= product.price.toFixed(2) %></p>
+
+      <!-- ADMIN ACTIONS ONLY -->
+      <% if (user && user.role === 'admin') { %>
+        <div class="product-actions">
+          <a 
+            href="/products/edit/<%= product.productId %>" 
+            class="btn-action btn-edit"
+          >
+            Edit
+          </a>
+
+          <form 
+            action="/products/delete/<%= product.productId %>" 
+            method="POST" 
+            style="display:inline;" 
+            onsubmit="return confirm('Delete <%= product.name %>?');"
+          >
+            <button type="submit" class="btn-action btn-delete">Delete</button>
+          </form>
+        </div>
+      <% } %>
+
+    </div>
+  <% }) %>
+</div>

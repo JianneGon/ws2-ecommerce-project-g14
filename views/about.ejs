@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="About <%= name %> — authentic sneaker reseller based in Manila.">
+  <meta name="keywords" content="sneakers, reseller, Commonwealth, Manila, footwear">
+  <meta name="author" content="<%= name %>">
+  <meta name="robots" content="index, follow">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="About <%= name %>">
+  <meta property="og:description" content="<%= description %>">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="/images/profile.png">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+
+  <!-- Theme CSS -->
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+
+  <!-- =========================================
+       BRAND INTRO / HERO BLOCK
+  ============================================== -->
+  <section class="brand-intro">
+    <div class="brand-intro-container">
+
+      <h1 class="brand-intro-title">THIS IS COMMONWEALTH</h1>
+
+      <p class="brand-intro-text">
+        When your journey begins with passion, every step brings you closer to greatness. Whether you're chasing 
+        limited releases, discovering timeless classics, or expressing your identity through sneakers — 
+        Commonwealth is here to elevate your experience.
+        Every pair carries a story — a story of culture, movement, and creativity.
+        Go chase it. Go feel it. Go elevate your style.
+      </p>
+
+    </div>
+  </section>
+
+  <!-- =========================================
+       BRAND STORY SECTION
+  ============================================== -->
+  <section class="story-section">
+    <div class="story-container">
+
+      <!-- LEFT: TEXT -->
+      <div class="story-text">
+        <h2 class="story-title">THE HISTORY</h2>
+
+        <p class="story-description">
+          Commonwealth began with a passion for sneaker culture and a vision to provide the Philippines 
+          with access to premium, authentic footwear. Starting from a small curated collection, the brand 
+          has grown into a trusted source for rare releases, timeless classics, and globally recognized styles.
+          <br><br>
+          For years, Commonwealth has connected sneaker lovers to the brands and stories they love —
+          combining authenticity, culture, and craftsmanship with every pair.
+        </p>
+      </div>
+
+      <!-- RIGHT IMAGE -->
+      <div class="story-image">
+        <img src="/images/history.jpg" alt="Commonwealth History">
+      </div>
+
+    </div>
+  </section>
+
+  <!-- =========================================
+       MISSION / VISION / VALUES
+  ============================================== -->
+  <section class="mv-values-section">
+    <div class="mv-container">
+
+      <!-- Mission + Vision -->
+      <div class="mv-left">
+        <h2 class="mv-title">Mission</h2>
+        <p class="mv-text">
+          To make premium, authentic sneakers accessible to every Filipino — empowering individuality and culture through footwear.
+        </p>
+
+        <h2 class="mv-title" style="margin-top: 50px;">Vision</h2>
+        <p class="mv-text">
+          To become the most trusted destination for sneaker enthusiasts in the Philippines — where authenticity, culture, and community come together.
+        </p>
+      </div>
+
+      <!-- Values -->
+      <div class="mv-right">
+        <h2 class="mv-title">Values</h2>
+
+        <div class="value-item" onclick="toggleValue(0)">
+          <div class="value-header">
+            <span class="value-icon">+</span>
+            <h3>Authenticity First</h3>
+          </div>
+          <p class="value-description">
+            Every pair we offer is carefully inspected and verified. Trust is our foundation, and authenticity is our promise.
+          </p>
+        </div>
+
+        <div class="value-item" onclick="toggleValue(1)">
+          <div class="value-header">
+            <span class="value-icon">+</span>
+            <h3>Customer Commitment</h3>
+          </div>
+          <p class="value-description">
+            We put customers at the heart of our journey — offering a smooth, dependable, and transparent shopping experience.
+          </p>
+        </div>
+
+        <div class="value-item" onclick="toggleValue(2)">
+          <div class="value-header">
+            <span class="value-icon">+</span>
+            <h3>Community Driven</h3>
+          </div>
+          <p class="value-description">
+            Sneakers are culture — and we celebrate the stories, passions, and individuality that make this community unique.
+          </p>
+        </div>
+
+        <div class="value-item" onclick="toggleValue(3)">
+          <div class="value-header">
+            <span class="value-icon">+</span>
+            <h3>Integrity Always</h3>
+          </div>
+          <p class="value-description">
+            From sourcing to service, we uphold honesty, fairness, and transparency every step of the way.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================
+       WHAT WE OFFER
+  ============================================== -->
+  <section class="overview-section">
+    <div class="overview-container">
+
+      <h2 class="overview-title">What We Offer</h2>
+
+      <div class="overview-grid">
+
+        <div class="overview-card">
+          <div class="overview-icon">
+            <img src="/images/icons/authentic.png" alt="">
+          </div>
+          <h3>100% Authentic Sneakers</h3>
+          <p>Every pair we sell is verified and inspected for true authenticity.</p>
+        </div>
+
+        <div class="overview-card">
+          <div class="overview-icon">
+            <img src="/images/icons/curated.png" alt="">
+          </div>
+          <h3>Curated Collections</h3>
+          <p>Hand-selected sneakers curated for culture, style, and timeless appeal.</p>
+        </div>
+
+        <div class="overview-card">
+          <div class="overview-icon">
+            <img src="/images/icons/exclusive.png" alt="">
+          </div>
+          <h3>Limited & Exclusive Releases</h3>
+          <p>Discover rare drops and exclusive collaborations unavailable elsewhere.</p>
+        </div>
+
+        <div class="overview-card">
+          <div class="overview-icon">
+            <img src="/images/icons/brands.png" alt="">
+          </div>
+          <h3>Top Global Brands</h3>
+          <p>Nike, Adidas, New Balance, Puma, Converse, and more.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================
+     DOT TIMELINE NAVIGATION (FINAL)
+============================= -->
+<section class="dot-timeline-section">
+  <h2 class="dot-timeline-title">Our Journey</h2>
+
+  <div class="dot-timeline-bar">
+
+    <!-- Equal Spacing Years -->
+    <div class="dot-timeline-grid">
+
+      <div class="dot-year active" data-year="2010">
+        <span class="dot"></span>
+        <p>2010</p>
+      </div>
+
+      <div class="dot-year" data-year="2012">
+        <span class="dot"></span>
+        <p>2012</p>
+      </div>
+
+      <div class="dot-year" data-year="2015">
+        <span class="dot"></span>
+        <p>2015</p>
+      </div>
+
+      <div class="dot-year" data-year="2017">
+        <span class="dot"></span>
+        <p>2017</p>
+      </div>
+
+      <div class="dot-year" data-year="2019">
+        <span class="dot"></span>
+        <p>2019</p>
+      </div>
+
+      <div class="dot-year" data-year="2021">
+        <span class="dot"></span>
+        <p>2021</p>
+      </div>
+
+      <div class="dot-year" data-year="2023">
+        <span class="dot"></span>
+        <p>2023</p>
+      </div>
+
+      <div class="dot-year" data-year="2024">
+        <span class="dot"></span>
+        <p>2024</p>
+      </div>
+
+    </div>
+
+    <!-- ARROWS ON THE FAR RIGHT -->
+    <div class="dot-timeline-arrows">
+      <button class="dot-timeline-arrow prev-year">&lt;</button>
+      <button class="dot-timeline-arrow next-year">&gt;</button>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- =========================================
+     BRAND TIMELINE CONTENT CARDS (FIXED)
+============================================== -->
+<section class="timeline-section">
+  <div class="timeline-container">
+
+    <div class="timeline-content-wrapper">
+
+      <article class="timeline-card active" data-year="2010">
+        <div class="timeline-main">
+          <div class="timeline-image-lg">
+            <img src="/images/timeline-2010-main.jpg" alt="">
+          </div>
+          <div class="timeline-text">
+            <h3>2010 — Where It All Started</h3>
+            <p>Commonwealth began as a small passion project built by sneaker lovers who wanted to bring something different to Manila.
+                What started as sourcing pairs for friends and local collectors slowly grew into a community — driven by shared stories, shared culture, and the excitement of finding something unique.
+                2010 marked the birth of a movement that aimed to raise the standard for authenticity, quality, and sneaker culture in the Philippines.</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="timeline-card" data-year="2012">
+        <div class="timeline-main">
+          <div class="timeline-image-lg">
+            <img src="/images/timeline-2012-main.jpg" alt="">
+          </div>
+          <div class="timeline-text">
+            <h3>2012 — Curated Collections</h3>
+            <p>As sneaker culture evolved, so did we.
+                In 2012, Commonwealth shifted from casual reselling to something more intentional — curated collections chosen for design, wearability, and cultural relevance.
+                Every pair became part of a story.
+                This period marked our transition from hobbyists to curators, setting the tone for what the brand would eventually become: a thoughtful destination for elevated footwear.</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="timeline-card" data-year="2015">
+        <div class="timeline-main">
+          <div class="timeline-image-lg">
+            <img src="/images/timeline-2015-main.jpg" alt="">
+          </div>
+          <div class="timeline-text">
+            <h3>2015 — Building the Brand</h3>
+            <p>By 2015, Commonwealth had grown into a recognized name among local sneaker enthusiasts.
+              We refined our selection, expanded our catalog, and introduced silhouettes that appealed to both seasoned collectors and everyday wearers.
+              This was the year we embraced our identity — not just as a seller of sneakers, but as a brand built on trust, authenticity, and culture.
+              The foundation of what customers know today started to take shape.</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="timeline-card" data-year="2017">
+        <div class="timeline-main">
+          <div class="timeline-image-lg">
+            <img src="/images/timeline-2017-main.jpg" alt="">
+          </div>
+          <div class="timeline-text">
+            <h3>2017 — Limited & Exclusive Drops</h3>
+            <p>2017 marked a new chapter of exclusivity and premium offerings.
+              We introduced limited releases, hard-to-find pairs, and collaborative drops that were previously out of reach for many Filipino collectors.
+              Lines formed, communities grew, and sneakers became more than footwear — they became symbols of stories, passion, and identity.
+              This shift placed Commonwealth at the heart of the local streetwear and sneaker movement.</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="timeline-card" data-year="2019">
+        <div class="timeline-main">
+          <div class="timeline-image-lg">
+            <img src="/images/timeline-2019-main.jpg" alt="">
+          </div>
+          <div class="timeline-text">
+            <h3>2019 — Going Online</h3>
+            <p>With demand growing across the country, 2019 became the year we expanded digitally.
+                Our online platform launched with one goal: make it easier for every Filipino to access authentic sneakers without the barriers of geography.
+                Shipping, customer experience, and the digital storefront were all built to reflect the same standards we set in person.
+                This step opened Commonwealth to a national audience — and reshaped how we served our community.</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="timeline-card" data-year="2021">
+        <div class="timeline-main">
+          <div class="timeline-image-lg">
+            <img src="/images/timeline-2021-main.jpg" alt="">
+          </div>
+          <div class="timeline-text">
+            <h3>2021 — Modern Sneaker Experience</h3>
+            <p>The world changed, and so did we.
+                In 2021, Commonwealth embraced a more modern and elevated identity — from refreshed branding and store layouts to a more seamless customer journey.
+                We focused on clean design, better storytelling, and creating an experience that matched the quality of the products we offered.
+                This was our commitment to evolve with sneaker culture while staying rooted in authenticity.</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="timeline-card" data-year="2023">
+        <div class="timeline-main">
+          <div class="timeline-image-lg">
+            <img src="/images/timeline-2023-main.jpg" alt="">
+          </div>
+          <div class="timeline-text">
+            <h3>2023 — New Partnerships</h3>
+            <p>As the brand grew, so did our relationships.
+                In 2023, we strengthened partnerships with global sneaker and lifestyle brands, opening doors to new silhouettes, exclusive colorways, and limited collaborations.
+                Our roster expanded, offering more choices and deeper stories behind every pair.
+                This year solidified Commonwealth’s place as a trusted bridge between international brands and the Filipino sneaker community.catalog with new silhouettes, colorways, and collaborative designs.
+                A stronger lineup meant more choices for the growing community.</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="timeline-card" data-year="2024">
+        <div class="timeline-main">
+          <div class="timeline-image-lg">
+            <img src="/images/timeline-2024-main.jpg" alt="">
+          </div>
+          <div class="timeline-text">
+            <h3>2025 — The Next Chapter</h3>
+            <p>2025 is a year defined by evolution.
+                We doubled down on premium drops, community-centered events, and improved digital capabilities — all geared toward empowering the next generation of sneaker enthusiasts.
+                As Commonwealth continues to grow, our goal remains the same: to create spaces where culture, creativity, and authenticity connect.
+                And while our story has come a long way, the journey is far from over.</p>
+          </div>
+        </div>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============================
+     TEAM / FOUNDERS SECTION
+============================= -->
+<section class="team-section">
+  <div class="team-container">
+
+    <h2 class="team-heading">Meet the Founders</h2>
+    <p class="team-subtitle">
+      A small team with a big passion for sneaker culture — driven by authenticity, creativity, 
+      and community.
+    </p>
+
+    <div class="team-grid">
+
+      <!-- FOUNDER 1 -->
+      <div class="team-card">
+        <div class="team-photo">
+          <img src="/images/team-founder1.jpg" alt="Founder 1">
+        </div>
+
+        <div class="team-info">
+          <h3 class="team-name">Jianne Mangay-ayam</h3>
+          <p class="team-role">Founder & Creative Lead</p>
+
+          <p class="team-description">
+            Passionate about sneaker culture and design, I started Commonwealth with the goal of bringing premium 
+            and authentic footwear closer to the Filipino community. I focus on curation, branding, and ensuring 
+            every pair tells a story.
+          </p>
+        </div>
+      </div>
+
+      <!-- FOUNDER 2 -->
+      <div class="team-card">
+        <div class="team-photo">
+          <img src="/images/team-founder2.jpg" alt="Founder 2">
+        </div>
+
+        <div class="team-info">
+          <h3 class="team-name">Nicole Atienza</h3>
+          <p class="team-role">Co-Founder & Operations Lead</p>
+
+          <p class="team-description">
+            I oversee authenticity checks, logistics, and customer experience. My mission is to ensure every 
+            pair delivered is fully verified and handled with care — because trust is the foundation of our brand.
+          </p>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+<!-- ============================
+     COMMUNITY TRUST + MILESTONES
+=============================== -->
+<section class="community-section">
+  <div class="community-container">
+
+    <h2 class="community-heading">Trusted by the Sneaker Community</h2>
+    <p class="community-subtitle">
+      Built on authenticity, consistency, and word of mouth — one pair and one story at a time.
+    </p>
+
+    <!-- VERTICAL TIMELINE -->
+    <div class="community-timeline">
+
+      <!-- Milestone 01 -->
+      <article class="community-milestone left">
+        <div class="milestone-dot"></div>
+        <div class="milestone-card">
+          <span class="milestone-label">01</span>
+          <h3 class="milestone-title">15,000+ Sneakers Delivered</h3>
+          <p class="milestone-text">
+            From everyday pairs to rare drops, we’ve safely delivered sneakers across the Philippines
+            since 2010 — always packed, handled, and shipped with care.
+          </p>
+        </div>
+      </article>
+
+      <!-- Milestone 02 -->
+      <article class="community-milestone right">
+        <div class="milestone-dot"></div>
+        <div class="milestone-card">
+          <span class="milestone-label">02</span>
+          <h3 class="milestone-title">8,000+ Sneaker Enthusiasts</h3>
+          <p class="milestone-text">
+            A growing community of repeat buyers, collectors, and first-time sneakerheads who trust us
+            whenever they’re ready for their next pair.
+          </p>
+        </div>
+      </article>
+
+      <!-- Milestone 03 -->
+      <article class="community-milestone left">
+        <div class="milestone-dot"></div>
+        <div class="milestone-card">
+          <span class="milestone-label">03</span>
+          <h3 class="milestone-title">12+ Premium Global Brands</h3>
+          <p class="milestone-text">
+            From Nike, Adidas, New Balance, Puma, Converse, and more — all sourced through trusted
+            partners and verified channels.
+          </p>
+        </div>
+      </article>
+
+      <!-- Milestone 04 -->
+      <article class="community-milestone right">
+        <div class="milestone-dot"></div>
+        <div class="milestone-card">
+          <span class="milestone-label">04</span>
+          <h3 class="milestone-title">4.9 / 5 Customer Rating</h3>
+          <p class="milestone-text">
+            Based on post-purchase feedback, chats, and verified reviews — focused on transparency,
+            authenticity checks, and after-sales support.
+          </p>
+        </div>
+      </article>
+
+    </div>
+
+   <!---Testimonial section-->
+<section class="cmw-testimonials">
+  <h2 class="cmw-title">What Our Clients Say</h2>
+  <p class="cmw-subtitle">
+    Real stories from buyers, collectors, and sneaker enthusiasts who trust Commonwealth.
+  </p>
+
+  <div class="cmw-slider-wrapper">
+    <div class="cmw-slider">
+
+      <!-- CARD 1 -->
+      <div class="cmw-testimonial-card">
+        <p class="cmw-text">“Legit and smooth transaction every time. Pairs always arrive exactly as described.”</p>
+        <div class="cmw-user">
+          <img src="/images/user1.jpg">
+          <div>
+            <h4>Karl D.</h4>
+            <p class="role">Quezon City</p>
+          </div>
+          <div class="stars">⭐⭐⭐⭐⭐</div>
+        </div>
+      </div>
+
+      <!-- CARD 2 -->
+      <div class="cmw-testimonial-card">
+        <p class="cmw-text">“Commonwealth is my go-to when I don’t want to stress about fakes. Super reliable!”</p>
+        <div class="cmw-user">
+          <img src="/images/user2.jpg">
+          <div>
+            <h4>Mia A.</h4>
+            <p class="role">Cebu City</p>
+          </div>
+          <div class="stars">⭐⭐⭐⭐⭐</div>
+        </div>
+      </div>
+
+      <!-- CARD 3 -->
+      <div class="cmw-testimonial-card">
+        <p class="cmw-text">“Customer service is top-tier. They helped me with sizing and care tips!”</p>
+        <div class="cmw-user">
+          <img src="/images/user3.jpg">
+          <div>
+            <h4>Dre M.</h4>
+            <p class="role">Taguig</p>
+          </div>
+          <div class="stars">⭐⭐⭐⭐⭐</div>
+        </div>
+      </div>
+
+      <!-- CARD 4 -->
+      <div class="cmw-testimonial-card">
+        <p class="cmw-text">“Smooth payment, legit pairs, fast shipping. Solid experience every time.”</p>
+        <div class="cmw-user">
+          <img src="/images/user4.jpg">
+          <div>
+            <h4>Jason T.</h4>
+            <p class="role">Makati</p>
+          </div>
+          <div class="stars">⭐⭐⭐⭐⭐</div>
+        </div>
+      </div>
+
+      <!-- CARD 5 -->
+      <div class="cmw-testimonial-card">
+        <p class="cmw-text">“Trusted seller! Got my pair earlier than expected. Definitely coming back.”</p>
+        <div class="cmw-user">
+          <img src="/images/user5.jpg">
+          <div>
+            <h4>Ella S.</h4>
+            <p class="role">Pasig</p>
+          </div>
+          <div class="stars">⭐⭐⭐⭐⭐</div>
+        </div>
+      </div>
+
+    </div>
+
+    
+    <!-- BUTTONS -->
+    <div class="cmw-controls">
+      <button class="cmw-slider-btn prev">←</button>
+      <button class="cmw-slider-btn next">→</button>
+    </div>
+  </div>
+</section>
+
+
+<section class="cmw-cta-section">
+  <div class="cmw-cta-container">
+
+    <h2 class="cmw-cta-title">Elevate Your Collection.</h2>
+
+    <p class="cmw-cta-subtitle">
+      Discover premium, verified, and authentic sneakers curated for Filipino sneakerheads —
+      sourced from trusted channels, inspected with care, and delivered with integrity.
+    </p>
+
+    <div class="cmw-cta-buttons">
+      <a href="/products" class="cmw-cta-btn primary">Shop All Sneakers</a>
+      <a href="/products?budget=5000" class="cmw-cta-btn secondary">Shop Under ₱5,000</a>
+    </div>
+
+
+
+    <p class="cmw-cta-trust">
+      ✔ 100% Authentic &nbsp; • &nbsp; Fast Delivery Nationwide &nbsp; • &nbsp; Trusted by 8,000+ Sneakerheads
+    </p>
+
+  </div>
+</section>
+
+
+  <!-- =========================================
+       JS SECTION (Values + Timeline)
+  ============================================== -->
+  <script>
+    function toggleValue(index) {
+      const items = document.querySelectorAll('.value-item');
+
+      items.forEach((item, i) => {
+        const icon = item.querySelector('.value-icon');
+        const isActive = item.classList.contains('active');
+
+        if (i === index) {
+          items.forEach(i => i.classList.remove('active'));
+          document.querySelectorAll('.value-icon').forEach(ic => ic.textContent = '+');
+
+          if (!isActive) {
+            item.classList.add('active');
+            icon.textContent = '–';
+          }
+        }
+      });
+    }
+  </script>
+
+  <script>
+document.addEventListener("DOMContentLoaded", () => {
+  const years = document.querySelectorAll(".dot-year");
+  const cards = document.querySelectorAll(".timeline-card");
+  const total = years.length;
+  let index = 0;
+
+  function resetAnimation(el) {
+    el.style.animation = "none";
+    el.offsetHeight; // force reflow
+    el.style.animation = null;
+  }
+
+  function showCard(i) {
+    years.forEach((y, idx) => {
+      y.classList.toggle("active", idx === i);
+    });
+
+    cards.forEach((card, idx) => {
+      card.classList.remove("active");
+
+      // RESET ANIMATIONS
+      resetAnimation(card);
+      resetAnimation(card.querySelector(".timeline-image-lg img"));
+      resetAnimation(card.querySelector(".timeline-text h3"));
+      resetAnimation(card.querySelector(".timeline-text p"));
+    });
+
+    // ACTIVATE CARD
+    const activeCard = cards[i];
+    activeCard.classList.add("active");
+  }
+
+  // Click year
+  years.forEach((y, i) => {
+    y.addEventListener("click", () => {
+      index = i;
+      showCard(index);
+    });
+  });
+
+  // Arrow next
+  document.querySelector(".next-year").addEventListener("click", () => {
+    index = (index + 1) % total;
+    showCard(index);
+  });
+
+  // Arrow previous
+  document.querySelector(".prev-year").addEventListener("click", () => {
+    index = (index - 1 + total) % total;
+    showCard(index);
+  });
+
+  // Initial state
+  showCard(0);
+});
+
+
+// TESTIMONIAL script//
+let cmwIndex = 0;
+
+const cmwSlider = document.querySelector(".cmw-slider");
+const cmwCards = document.querySelectorAll(".cmw-testimonial-card");
+const cmwBtnPrev = document.querySelector(".cmw-slider-btn.prev");
+const cmwBtnNext = document.querySelector(".cmw-slider-btn.next");
+
+function updateSlider() {
+  const cardWidth = cmwCards[0].offsetWidth + 25;
+  cmwSlider.style.transform = `translateX(-${cmwIndex * cardWidth}px)`;
+}
+
+cmwBtnNext.addEventListener("click", () => {
+  if (cmwIndex < cmwCards.length - 3) cmwIndex++;
+  updateSlider();
+});
+
+cmwBtnPrev.addEventListener("click", () => {
+  if (cmwIndex > 0) cmwIndex--;
+  updateSlider();
+});
+
+window.addEventListener("resize", updateSlider);
+
+
+</script>
+
+
+</body>
+</html>
