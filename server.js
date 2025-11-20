@@ -1,17 +1,14 @@
 // =======================
 // Import Dependencies
 // =======================
-const cartRoute = require('./routes/cart');
-const ordersRoute = require('./routes/orders');
-const adminOrdersRoute = require('./routes/adminOrders');
 const express = require('express');
 const session = require('express-session');
-const bodyParser = require('body-parser');
 const expressLayouts = require('express-ejs-layouts');
+const bodyParser = require('body-parser');
 const { MongoClient } = require('mongodb');
 const path = require('path');
 
-// Only load .env locally
+// Load .env except in production (Render uses its own env)
 if (process.env.NODE_ENV !== 'production') {
   require('dotenv').config();
 }
@@ -25,12 +22,15 @@ const PORT = process.env.PORT || 3000;
 // =======================
 // Middleware
 // =======================
+
+// Body parsers
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+app.use(bodyParser.json());     // required for checkout JSON
 
-// Serve static files from /public
-app.use(express.static(path.join(__dirname, 'public')));
+// Serve static files (CSS, images, uploads)
+app.use('/public', express.static(path.join(__dirname, 'public')));
 
+// EJS Layout Engine
 app.use(expressLayouts);
 app.set('view engine', 'ejs');
 app.set('layout', 'layouts/main');
@@ -42,24 +42,22 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'dev-secret',
   resave: false,
   saveUninitialized: false,
-  rolling: true,
+  rolling: true, // extend session on activity
   cookie: {
-    secure: false,          // Set to true only if using HTTPS
-    maxAge: 15 * 60 * 1000  // 15 minutes
+    secure: false,                // set true only with HTTPS
+    maxAge: 15 * 60 * 1000        // 15 minutes
   }
 }));
 
-// Make session user available to all views
+// Make session user globally available in all EJS views
 app.use((req, res, next) => {
   res.locals.user = req.session.user || null;
   next();
 });
 
-// =======================
-// Debug Info
-// =======================
+// Debug (optional)
 console.log("NODE_ENV:", process.env.NODE_ENV);
-console.log("MONGO_URI at runtime:", process.env.MONGO_URI);
+console.log("MONGO_URI:", process.env.MONGO_URI);
 
 // =======================
 // MongoDB Setup
@@ -69,29 +67,38 @@ app.locals.client = client;
 app.locals.dbName = process.env.DB_NAME || "ecommerceDB";
 
 // =======================
-// Routes
+// Import Route Files
 // =======================
 const usersRoute = require('./routes/users');
 const indexRoute = require('./routes/index');
 const productsRoute = require('./routes/products');
 const passwordRoute = require('./routes/password');
 const storesRoute = require('./routes/stores');
-const infoRouter = require('./routes/info');
+const infoRoute = require('./routes/info');
 
-// Route order matters: more specific routes first
+const cartRoute = require('./routes/cart');
+const ordersRoute = require('./routes/orders');
+const adminOrdersRoute = require('./routes/adminOrders');
+
+// =======================
+// Mount Routes (ORDER MATTERS)
+// =======================
+
+// Specific routes FIRST
 app.use('/stores', storesRoute);
 app.use('/users', usersRoute);
 app.use('/products', productsRoute);
 app.use('/password', passwordRoute);
-app.use('/cart', cartRoute);     // 👈 added
-app.use('/orders', ordersRoute);     // ➕ customer orders + checkout
-app.use('/admin', adminOrdersRoute); // ➕ admin orders table
-app.use('/', indexRoute);     // <-- indexRoute first
-app.use('/', infoRouter);     // <-- infoRouter second
+app.use('/cart', cartRoute);
+app.use('/orders', ordersRoute);
+app.use('/admin', adminOrdersRoute);
 
+// General pages LAST
+app.use('/', indexRoute);      // homepage, shop, etc.
+app.use('/', infoRoute);       // about, contact, terms, privacy
 
 // =======================
-// Serve sitemap.xml from root
+// Serve sitemap.xml
 // =======================
 app.get('/sitemap.xml', (req, res) => {
   res.sendFile(path.join(__dirname, 'sitemap.xml'));
@@ -102,7 +109,10 @@ app.get('/sitemap.xml', (req, res) => {
 // =======================
 app.use((req, res) => {
   res.set('Cache-Control', 'no-store');
-  res.status(404).render('404', { title: "Page Not Found", layout: false });
+  res.status(404).render('404', {
+    title: "Page Not Found",
+    layout: false
+  });
 });
 
 // =======================
@@ -110,8 +120,14 @@ app.use((req, res) => {
 // =======================
 app.use((err, req, res, next) => {
   console.error("Server Error:", err.stack);
+
   if (res.headersSent) return next(err);
-  res.status(500).render('500', { title: "Server Error", layout: false, req });
+
+  res.status(500).render('500', {
+    title: "Server Error",
+    layout: false,
+    req
+  });
 });
 
 // =======================
@@ -123,7 +139,7 @@ async function main() {
     console.log("✅ Connected to MongoDB Atlas");
 
     app.listen(PORT, () => {
-      console.log(`🚀 Server running on http://localhost:${PORT}`);
+      console.log(`🚀 Server running at http://localhost:${PORT}`);
     });
 
     // Graceful shutdown

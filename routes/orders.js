@@ -5,7 +5,7 @@ const { ObjectId } = require("mongodb");
 const { v4: uuidv4 } = require("uuid");
 const requireLogin = require("../middlewares/requireLogin");
 
-// Helper: find product by productId or _id
+// Helper function to load product by productId or _id
 async function findProduct(db, productId) {
   const productsCol = db.collection("products");
 
@@ -16,14 +16,12 @@ async function findProduct(db, productId) {
   return product;
 }
 
-// =======================
-// GET /orders/checkout?productId=...&qty=...
-// Show checkout page for a single product
-// =======================
+// =====================================================================
+// GET /orders/checkout - Checkout page for a single product
+// =====================================================================
 router.get("/checkout", requireLogin, async (req, res) => {
   try {
     const db = req.app.locals.client.db(req.app.locals.dbName);
-
     const productId = (req.query.productId || "").trim();
     let qty = parseInt(req.query.qty, 10) || 1;
 
@@ -56,8 +54,7 @@ router.get("/checkout", requireLogin, async (req, res) => {
       });
     }
 
-    if (qty < 1) qty = 1;
-    if (qty > product.stock) qty = product.stock;
+    qty = Math.min(Math.max(qty, 1), product.stock);
 
     const totalAmount = product.price * qty;
 
@@ -79,10 +76,9 @@ router.get("/checkout", requireLogin, async (req, res) => {
   }
 });
 
-// =======================
-// POST /orders/checkout
-// Finalize order (single product)
-// =======================
+// =====================================================================
+// POST /orders/checkout - Finalize order (single product)
+// =====================================================================
 router.post("/checkout", requireLogin, async (req, res) => {
   try {
     const db = req.app.locals.client.db(req.app.locals.dbName);
@@ -133,32 +129,27 @@ router.post("/checkout", requireLogin, async (req, res) => {
       });
     }
 
-    if (qty < 1) qty = 1;
-    if (qty > product.stock) qty = product.stock;
+    qty = Math.min(Math.max(qty, 1), product.stock);
 
     const subtotal = product.price * qty;
     const totalAmount = subtotal;
-    const totalQty = qty;
-
-    const now = new Date();
-    const orderId = uuidv4();
 
     const orderDoc = {
-      orderId,
+      orderId: uuidv4(),
       userId: user.userId,
       email: user.email,
       items: [
         {
           productId: product.productId,
           name: product.name,
-          brand: product.brand,
+          brand: product.brand || null,
           price: product.price,
           quantity: qty,
           subtotal,
         },
       ],
-      totalQty,
       totalAmount,
+      orderStatus: "to_pay", // FIXED!
       shipping: {
         fullName,
         addressLine1,
@@ -168,9 +159,8 @@ router.post("/checkout", requireLogin, async (req, res) => {
         postalCode,
         phone,
       },
-      status: "pending",
-      createdAt: now,
-      updatedAt: now,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
     await ordersCol.insertOne(orderDoc);
@@ -181,9 +171,9 @@ router.post("/checkout", requireLogin, async (req, res) => {
       { $inc: { stock: -qty } }
     );
 
-    return res.render("success", {
+    res.render("success", {
       title: "Order Placed",
-      message: `Your order <strong>${orderId}</strong> has been placed successfully.`,
+      message: `Your order <strong>${orderDoc.orderId}</strong> has been placed successfully.`,
       backLink: "/orders",
       backText: "View My Orders",
     });
@@ -198,9 +188,9 @@ router.post("/checkout", requireLogin, async (req, res) => {
   }
 });
 
-// =======================
-// GET /orders – list current user's orders
-// =======================
+// =====================================================================
+// GET /orders - Customer order list
+// =====================================================================
 router.get("/", requireLogin, async (req, res) => {
   try {
     const db = req.app.locals.client.db(req.app.locals.dbName);
@@ -227,9 +217,9 @@ router.get("/", requireLogin, async (req, res) => {
   }
 });
 
-// =======================
-// GET /orders/:orderId – order detail (customer)
-// =======================
+// =====================================================================
+// GET /orders/:orderId - Customer order details
+// =====================================================================
 router.get("/:orderId", requireLogin, async (req, res) => {
   try {
     const db = req.app.locals.client.db(req.app.locals.dbName);
@@ -262,38 +252,6 @@ router.get("/:orderId", requireLogin, async (req, res) => {
       backLink: "/orders",
       backText: "Back to Orders",
     });
-  }
-});
-
-// =======================
-// ADMIN: View all orders
-// =======================
-const { isAdmin } = require("../middlewares/auth");
-
-router.get("/admin/list", isAdmin, async (req, res) => {
-  try {
-    const db = req.app.locals.client.db(req.app.locals.dbName);
-    const ordersCol = db.collection("orders");
-
-    const orders = await ordersCol
-      .find({})
-      .sort({ createdAt: -1 })
-      .toArray();
-
-    res.render("admin-orders", {
-      title: "All Orders",
-      orders,
-      user: req.session.user,
-    });
-  } catch (err) {
-    console.error("Error fetching all orders:", err);
-    res.render("error", {
-      title: "Admin Orders Error",
-      message: "Something went wrong while loading all orders.",
-      backLink: "/admin",
-      backText: "Back to Admin",
-    });
-  }
-});
+  }});
 
 module.exports = router;
