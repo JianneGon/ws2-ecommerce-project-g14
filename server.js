@@ -28,7 +28,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());     // required for checkout JSON
 
 // Serve static files (CSS, images, uploads)
-app.use('/public', express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // EJS Layout Engine
 app.use(expressLayouts);
@@ -44,14 +44,18 @@ app.use(session({
   saveUninitialized: false,
   rolling: true, // extend session on activity
   cookie: {
-    secure: false,                // set true only with HTTPS
+    secure: false,                // true only with HTTPS
     maxAge: 15 * 60 * 1000        // 15 minutes
   }
 }));
 
-// Make session user globally available in all EJS views
+// Make session user + cart count globally available in all EJS views
 app.use((req, res, next) => {
   res.locals.user = req.session.user || null;
+
+  const cart = req.session.cart;
+  res.locals.cartCount = cart && cart.totalQty ? cart.totalQty : 0;
+
   next();
 });
 
@@ -65,6 +69,56 @@ console.log("MONGO_URI:", process.env.MONGO_URI);
 const client = new MongoClient(process.env.MONGO_URI);
 app.locals.client = client;
 app.locals.dbName = process.env.DB_NAME || "ecommerceDB";
+
+// GLOBAL DEFAULT SHIPPING & RETURNS (for all products)
+app.locals.shippingInfoDefault = `
+<b>Standard Shipping & Delivery</b><br><br>
+Orders are processed within <b>3–5 business days</b> after payment confirmation.<br>
+Once shipped, delivery typically takes <b>5–15 business days</b> depending on your location.<br><br>
+
+<b>Estimated Delivery:</b><br>
+• Metro Manila: 5–7 business days<br>
+• Luzon: 7–15 business days<br>
+• Visayas: 7–15 business days<br>
+• Mindanao: 7–15 business days<br><br>
+
+You will receive an email with your <b>tracking number</b> once your order has been dispatched.
+`;
+
+app.locals.returnsInfoDefault = `
+<b>Returns Policy</b><br><br>
+Items may be returned within <b>7 days</b> of delivery.<br>
+Products must be unused, in original packaging, and complete with all accessories.<br><br>
+
+For return assistance, please contact us at<br>
+<b>info@atmos.ph</b>.
+`;
+
+// =======================
+// ✅ CART PERSISTENCE (NEW MIDDLEWARE)
+// =======================
+app.use(async (req, res, next) => {
+  try {
+    // Only logged-in users
+    if (!req.session.user) return next();
+
+    const db = req.app.locals.client.db(req.app.locals.dbName);
+    const usersCol = db.collection("users");
+
+    // If cart exists → always sync it to DB
+    if (req.session.cart) {
+      await usersCol.updateOne(
+        { userId: req.session.user.userId },
+        { $set: { cart: req.session.cart } }
+      );
+    }
+
+    next();
+  } catch (err) {
+    console.error("Cart persistence error:", err);
+    next();
+  }
+});
 
 // =======================
 // Import Route Files

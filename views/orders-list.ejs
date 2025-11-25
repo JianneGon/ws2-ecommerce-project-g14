@@ -7,33 +7,47 @@
   </p>
 <% } else { %>
 
-  <div class="table-container">
-    <table>
-      <thead>
-        <tr>
-          <th>Order ID</th>
-          <th>Date</th>
-          <th>Items</th>
-          <th>Total</th>
-          <th>Status</th>
-          <th>View</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% orders.forEach(order => { %>
-          <tr>
-            <td><%= order.orderId %></td>
-            <td><%= order.createdAt.toLocaleString() %></td>
-            <td><%= order.totalQty %></td>
-            <td>₱<%= order.totalAmount.toFixed(2) %></td>
-            <td><%= order.status %></td>
-            <td>
-              <a href="/orders/<%= order.orderId %>" class="btn-edit">Details</a>
-            </td>
-          </tr>
-        <% }) %>
-      </tbody>
-    </table>
-  </div>
+<div class="orders-list-container">
+
+    <!-- HEADER -->
+    <div class="orders-header-row">
+        <span class="col-id">Order ID</span>
+        <span class="col-date">Date</span>
+        <span class="col-items">Items</span>
+        <span class="col-total">Total</span>
+        <span class="col-status">Status</span>
+        <span class="col-view"></span>
+    </div>
+
+    <!-- ROWS -->
+    <% orders.forEach(order => { %>
+        <div class="orders-row">
+
+            <div class="col-id"><%= order.orderId %></div>
+
+            <div class="col-date">
+                <%= order.createdAt.toLocaleString() %>
+            </div>
+
+            <div class="col-items">
+                <%= order.totalQty %>
+            </div>
+
+            <div class="col-total">
+                ₱<%= order.totalAmount.toFixed(2) %>
+            </div>
+
+            <div class="col-status">
+                <%= order.status.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()) %>
+            </div>
+
+            <div class="col-view">
+                <a href="/orders/<%= order.orderId %>" class="order-details-link">Details</a>
+            </div>
+
+        </div>
+    <% }) %>
+
+</div>
 
 <% } %>

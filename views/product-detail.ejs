@@ -1,55 +1,149 @@
-<main class="product-detail-container">
+<main class="product-detail-wrapper">
 
-  <!-- LEFT: BIG PRODUCT IMAGE -->
-  <div class="product-detail-image">
-    <img src="<%= product.imageUrl || '/images/placeholder-shoe.jpg' %>" alt="<%= product.name %>">
+  <!-- LEFT — PRODUCT IMAGE -->
+  <div class="product-detail-left">
+    <img 
+      src="<%= product.imageUrl || '/images/placeholder-shoe.jpg' %>" 
+      alt="<%= product.name %>"
+      class="product-main-image"
+    >
   </div>
 
-  <!-- RIGHT: PRODUCT INFO -->
-  <div class="product-detail-info">
+  <!-- RIGHT — PRODUCT INFO -->
+  <div class="product-detail-right">
 
-    <h1 class="product-detail-title"><%= product.name %></h1>
-    <p class="product-detail-brand"><%= product.brand %></p>
-    <p class="product-detail-price">₱<%= product.price.toLocaleString() %></p>
+    <!-- BREADCRUMBS -->
+    <nav class="breadcrumbs">
+      <a href="/">Home</a>
+      <span>›</span>
+      <a href="/products">Shoes</a>
+      <span>›</span>
+      <span class="current"><%= product.name %></span>
+    </nav>
 
-    <p class="product-detail-stock">
-      <% if (product.stock > 0) { %>
-        <span>In Stock: <%= product.stock %></span>
-      <% } else { %>
-        <span style="color: red;">Out of Stock</span>
-      <% } %>
-    </p>
+    <!-- HEADER -->
+    <div class="product-header">
+      <h1 class="product-title"><%= product.name %></h1>
+      <p class="product-brand-display"><%= product.brand %></p>
+      <p class="product-price-display">₱<%= product.price.toLocaleString() %></p>
+    </div>
 
-    <!-- CHECKOUT FORM (Lesson 20 Compliant) -->
-    <% if (product.stock > 0 && (!user || user.role === "customer")) { %>
-      <form action="/orders/checkout" method="GET" class="product-detail-cart-form">
+    <% 
+      // Shared sizes array (used by both user & admin)
+      let sizes = product.sizes && product.sizes.length
+        ? product.sizes
+        : ['US 6','US 6.5','US 7','US 7.5','US 8','US 8.5','US 9'].map(s => ({
+            label: s,
+            stock: product.stock || 0
+          }));
+    %>
+
+    <!-- SIZE SELECTOR — USERS / GUESTS ONLY -->
+    <% if (!user || user.role === "customer") { %>
+    <div class="size-block">
+      <p class="label">Size</p>
+
+      <div class="size-options">
+        <% sizes.forEach(s => { %>
+          <button
+            type="button"
+            class="size-option <%= s.stock <= 0 ? 'size-disabled' : '' %>"
+            data-size="<%= s.label %>"
+            <%= s.stock <= 0 ? 'disabled' : '' %>
+          >
+            <%= s.label %>
+            <% if (s.stock <= 0) { %>
+              <span style="text-decoration: line-through; opacity:.7;font-weight:bold;">X</span>
+            <% } %>
+          </button>
+        <% }) %>
+      </div>
+
+      <p class="selected-size-text">Selected size: None</p>
+    </div>
+    <% } %>
+
+    <!-- ADMIN VIEW — READ-ONLY SIZES & STOCK -->
+<% if (user && user.role === "admin") { %>
+<div class="size-block admin-size-block">
+  <p class="label">Sizes & Stock</p>
+
+  <table class="admin-size-table">
+    <thead>
+      <tr>
+        <th>Size</th>
+        <th>Stock</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% sizes.forEach(s => { %>
+        <tr>
+          <td><%= s.label %></td>
+          <td><%= s.stock %> pcs</td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+<% } %>
+
+
+    <!-- SKU -->
+    <div class="style-block">
+      <p class="label">Style</p>
+      <span class="style-value"><%= product.productId %></span>
+    </div>
+
+    <% if (product.stock > 0) { %>
+      <p class="stock-msg">Only <%= product.stock %> piece(s) left!</p>
+    <% } %>
+
+    <!-- ADD TO CART + PROCEED CHECKOUT (CUSTOMERS / GUESTS ONLY) -->
+    <% if ((!user || user.role === "customer") && product.stock > 0) { %>
+      <form id="addToCartForm" class="cart-section">
         <input type="hidden" name="productId" value="<%= product.productId %>">
+        <input type="hidden" name="size" id="selectedSize" value="">
 
-        <div class="product-qty-box">
-          <label for="qty">Quantity:</label>
+        <div class="qty-container">
+          <label>Quantity</label>
           <input 
-            type="number" 
-            id="qty" 
-            name="qty" 
-            value="1" 
-            min="1" 
-            max="<%= product.stock %>">
+            type="number"
+            name="quantity" 
+            value="1"
+            min="1"
+            max="<%= product.stock %>"
+            class="qty-input"
+          >
         </div>
 
-        <button type="submit" class="btn-primary product-add-cart">
-          PROCEED TO CHECKOUT
+        <button type="submit" class="btn-primary add-cart-btn">ADD TO CART</button>
+
+        <button 
+          type="button" 
+          id="proceedCheckoutBtn" 
+          class="btn-cancel" 
+          style="white-space:nowrap;">
+          Proceed to Checkout
         </button>
+
       </form>
     <% } %>
 
-    <!-- ADMIN: EDIT PRODUCT BUTTON -->
+    <!-- ADMIN BUTTONS -->
     <% if (user && user.role === "admin") { %>
-      <div style="margin-top: 20px;">
-        <a href="/products/edit/<%= product.productId %>" class="btn-edit">Edit Product</a>
+      <div class="admin-buttons">
+        <a href="/products/edit/<%= product.productId %>" class="admin-btn edit-btn">
+          Edit Product
+        </a>
+
+        <form action="/products/delete/<%= product.productId %>" method="POST"
+              onsubmit="return confirm('Delete this product?');" class="admin-delete-form">
+          <button class="admin-btn delete-btn">Delete Product</button>
+        </form>
       </div>
     <% } %>
 
-    <!-- TABS -->
+    <!-- CUSTOMER TABS -->
     <div class="product-tabs">
       <button class="tab active" data-tab="desc">Description</button>
       <button class="tab" data-tab="shipping">Shipping</button>
@@ -61,28 +155,168 @@
     </div>
 
     <div class="tab-content" id="shipping">
-      <p>Shipping usually takes 3–7 business days depending on your location.</p>
+      <p><%- shippingInfoDefault %></p>
     </div>
 
     <div class="tab-content" id="returns">
-      <p>We accept returns within 7 days as long as the item is unused and in original packaging.</p>
+      <p><%- returnsInfoDefault %></p>
     </div>
 
   </div>
 
 </main>
 
+
+<!-- ====================================================== -->
+<!-- YOU MAY ALSO LIKE — SHOWN ONLY FOR CUSTOMERS & GUESTS -->
+<!-- ====================================================== -->
+
+<% if (!user || user.role === "customer") { %>
+
+<section class="recommend-section">
+  <h2 class="recommend-title">YOU MAY ALSO LIKE</h2>
+
+  <div class="recommend-grid">
+    <% recommendations.forEach(item => { %>
+      <a href="/products/<%= item.productId %>" class="recommend-card">
+        
+        <div class="rec-img-wrapper">
+          <img src="<%= item.imageUrl %>" alt="<%= item.name %>">
+        </div>
+
+        <p class="rec-name"><%= item.name %></p>
+
+        <p class="rec-price">₱<%= item.price.toLocaleString() %></p>
+
+      </a>
+    <% }) %>
+  </div>
+</section>
+
+<% } %>
+
+
+<!-- ======================================================================= -->
+<!-- JAVASCRIPT -->
+<!-- ======================================================================= -->
+
 <script>
-  const tabs = document.querySelectorAll(".tab");
-  const contents = document.querySelectorAll(".tab-content");
+document.querySelectorAll(".size-option").forEach(btn => {
+  btn.addEventListener("click", () => {
+    if (btn.classList.contains("size-disabled")) return;
 
-  tabs.forEach(tab => {
-    tab.addEventListener("click", () => {
-      tabs.forEach(t => t.classList.remove("active"));
-      contents.forEach(c => c.classList.remove("active"));
+    document.querySelectorAll(".size-option").forEach(b => b.classList.remove("selected"));
+    btn.classList.add("selected");
 
-      tab.classList.add("active");
-      document.getElementById(tab.dataset.tab).classList.add("active");
-    });
+    const size = btn.dataset.size;
+    document.getElementById("selectedSize").value = size;
+
+    const text = document.querySelector(".selected-size-text");
+    if (text) text.textContent = "Selected size: " + size;
   });
+});
+
+// TABS
+document.querySelectorAll(".product-tabs .tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".product-tabs .tab").forEach(t => t.classList.remove("active"));
+    document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+
+    tab.classList.add("active");
+    document.getElementById(tab.dataset.tab).classList.add("active");
+  });
+});
+
+// ADD TO CART
+document.getElementById("addToCartForm")?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const productId = document.querySelector("input[name='productId']").value;
+  const size = document.querySelector("input[name='size']").value;
+  const quantity = document.querySelector("input[name='quantity']").value;
+
+  if (!size) {
+    alert("Please select a size first.");
+    return;
+  }
+
+  const response = await fetch("/cart/add", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "application/json"
+    },
+    body: JSON.stringify({ productId, size, quantity })
+  });
+
+  const result = await response.json();
+
+  if (result.success) {
+    const counter = document.getElementById("navCartCount");
+    if (counter) counter.textContent = `(${result.cartCount})`;
+    alert("Added to cart!");
+  } else {
+    alert("Failed: " + (result.message || "Unknown error"));
+  }
+});
+
+// PROCEED TO CHECKOUT
+document.getElementById("proceedCheckoutBtn")?.addEventListener("click", async () => {
+  const productId = document.querySelector("input[name='productId']").value;
+  const size = document.querySelector("input[name='size']").value;
+  const quantity = document.querySelector("input[name='quantity']").value;
+
+  if (!size) {
+    alert("Please select a size first.");
+    return;
+  }
+
+  const response = await fetch("/cart/add", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "application/json"
+    },
+    body: JSON.stringify({ productId, size, quantity })
+  });
+
+  const result = await response.json();
+
+  if (result.success) {
+    const counter = document.getElementById("navCartCount");
+    if (counter) counter.textContent = `(${result.cartCount})`;
+
+    window.location.href = "/cart/checkout";
+  } else {
+    alert("Error: " + (result.message || "Unable to proceed."));
+  }
+});
 </script>
+
+<style>
+  .size-disabled {
+    opacity: .45;
+    cursor: not-allowed;
+    text-decoration: line-through;
+    border-color: #ccc !important;
+  }
+  .admin-size-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-size: 0.95rem;
+  }
+
+  .admin-size-table th,
+  .admin-size-table td {
+    padding: 10px 6px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+  }
+
+  .admin-size-table th {
+    font-weight: 600;
+    background-color: #fafafa;
+  }
+
+</style>

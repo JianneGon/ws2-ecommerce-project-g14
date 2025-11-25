@@ -1,24 +1,69 @@
 <h1 class="page-title">Edit Product</h1>
 
 <div class="form-container">
+
+  <%
+    const sizeOptions = ['US 6', 'US 6.5', 'US 7', 'US 7.5', 'US 8', 'US 8.5', 'US 9'];
+
+    const sizeMap = {};
+    if (product.sizes && product.sizes.length) {
+      product.sizes.forEach(s => sizeMap[s.label] = s.stock);
+    }
+  %>
+
   <form action="/products/edit/<%= product.productId %>" method="POST" enctype="multipart/form-data" class="product-form">
+
     <label for="name">Product Name:</label>
-    <input type="text" id="name" name="name" value="<%= product.name %>" placeholder="Enter product name" required>
+    <input type="text" id="name" name="name" value="<%= product.name %>" required>
 
     <label for="brand">Brand:</label>
-    <input type="text" id="brand" name="brand" value="<%= product.brand %>" placeholder="Enter brand" required>
+    <input type="text" id="brand" name="brand" value="<%= product.brand %>" required>
 
     <label for="price">Price (₱):</label>
-    <input type="number" id="price" name="price" value="<%= product.price %>" step="0.01" min="0" placeholder="Enter price" required>
-
-    <label for="stock">Stock:</label>
-    <input type="number" id="stock" name="stock" value="<%= product.stock %>" min="0" placeholder="Enter stock quantity" required>
+    <input type="number" id="price" name="price" value="<%= product.price %>" step="0.01" min="0" required>
 
     <label for="description">Description:</label>
-    <textarea id="description" name="description" rows="4" placeholder="Enter product description"><%= product.description %></textarea>
+    <textarea id="description" name="description" rows="4"><%= product.description %></textarea>
+
+    <!-- SIZE TABLE -->
+    <h3 style="margin-top:20px;">Sizes & Stock</h3>
+    <p style="font-size: 0.9rem; margin-bottom: 8px;">
+      Set stock per size. <strong>0 stock = out of stock.</strong>
+    </p>
+
+    <table style="width:100%; border-collapse: collapse; margin-bottom: 10px;">
+      <thead>
+        <tr>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Size</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Stock</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% sizeOptions.forEach((label, idx) => {
+          const sizeStock = typeof sizeMap[label] !== "undefined" ? sizeMap[label] : 0;
+        %>
+          <tr>
+            <td style="padding:8px; border-bottom:1px solid #f1f1f1;"><%= label %></td>
+            <td style="padding:8px; border-bottom:1px solid #f1f1f1;">
+              <input type="hidden" name="sizes[<%= idx %>][label]" value="<%= label %>">
+              <input type="number" class="size-stock-input" name="sizes[<%= idx %>][stock]" value="<%= sizeStock %>" min="0" style="width:100px;">
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+
+    <!-- LIVE TOTAL STOCK -->
+    <p id="liveTotalStock" style="font-weight:600; margin-bottom:20px;">Total Stock: 0</p>
+
+    <label for="shippingInfo">Shipping Info:</label>
+    <textarea id="shippingInfo" name="shippingInfo" rows="3"><%= product.shippingInfo || '' %></textarea>
+
+    <label for="returnsInfo">Returns Policy:</label>
+    <textarea id="returnsInfo" name="returnsInfo" rows="3"><%= product.returnsInfo || '' %></textarea>
 
     <label>Current Image:</label>
-    <img src="<%= product.imageUrl %>" alt="Product Image" style="max-width:150px; border-radius:6px; margin-bottom: 10px; display:block;">
+    <img src="<%= product.imageUrl %>" style="max-width:150px; border-radius:6px; margin-bottom: 10px; display:block;">
 
     <label for="image">Change Image:</label>
     <input type="file" id="image" name="image" accept="image/*">
@@ -27,5 +72,23 @@
       <button type="submit" class="btn-save">Update Product</button>
       <a href="/products" class="btn-cancel">Cancel</a>
     </div>
+
   </form>
 </div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const inputs = document.querySelectorAll(".size-stock-input");
+    const totalEl = document.getElementById("liveTotalStock");
+
+    const calculateTotal = () => {
+      let total = 0;
+      inputs.forEach(i => total += Number(i.value) || 0);
+      totalEl.textContent = "Total Stock: " + total;
+    };
+
+    inputs.forEach(i => i.addEventListener("input", calculateTotal));
+
+    calculateTotal();
+  });
+</script>

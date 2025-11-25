@@ -1,22 +1,135 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
   <title><%= title %></title>
+  <link rel="stylesheet" href="/css/style.css">
+
+  <style>
+    .edit-container {
+      max-width: 600px;
+      margin: 40px auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0px 2px 8px rgba(0,0,0,0.1);
+      font-family: Montserrat, sans-serif;
+    }
+
+    .edit-container h1 {
+      text-align: center;
+      margin-bottom: 25px;
+      font-size: 1.6rem;
+      font-weight: 700;
+    }
+
+    .edit-container label {
+      display: block;
+      font-weight: 600;
+      margin: 12px 0 6px;
+    }
+
+    .edit-container input,
+    .edit-container select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      font-size: 0.95rem;
+    }
+
+    .edit-container button {
+      margin-top: 20px;
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
+      background: #0055ff;
+      color: white;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .edit-container button:hover {
+      background: #003fcc;
+    }
+    .success-message {
+  background: #d4edda;
+  color: #155724;
+  padding: 10px 15px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  border: 1px solid #c3e6cb;
+}
+  </style>
 </head>
+
 <body>
-  <h1>Edit User</h1>
 
-  <form action="/users/edit/<%= (user.userId || (user._id && user._id.toString())) %>" method="POST">
-    <label>First Name:</label>
-    <input type="text" name="firstName" value="<%= user.firstName %>" required><br>
+  <div class="edit-container">
 
-    <label>Last Name:</label>
-    <input type="text" name="lastName" value="<%= user.lastName %>" required><br>
+    <h1><%= loggedInUser.role === "admin" ? "Edit User" : "Edit Profile" %></h1>
+        <% if (typeof updated !== "undefined" && updated === "1") { %>
+      <div class="success-message">
+        Profile updated successfully!
+      </div>
+    <% } %>
 
-    <label>Email:</label>
-    <input type="email" name="email" value="<%= user.email %>" required><br>
 
-    <button type="submit" class="btn-save">Save Changes</button>
-  </form>
+    <form action="/users/edit/<%= (user.userId || (user._id && user._id.toString())) %>" method="POST">
+
+      <!-- First Name -->
+      <label>First Name</label>
+      <input type="text" name="firstName" value="<%= user.firstName %>" required>
+
+      <!-- Last Name -->
+      <label>Last Name</label>
+      <input type="text" name="lastName" value="<%= user.lastName %>" required>
+
+      <!-- Email -->
+      <label>Email</label>
+      <input type="email" name="email" value="<%= user.email %>" required>
+
+      <!-- OPTIONAL — Contact Number -->
+      <label>Contact Number (optional)</label>
+      <input type="text" name="contactNumber" value="<%= user.contactNumber || '' %>">
+
+      <!-- OPTIONAL — Address -->
+      <label>Address (optional)</label>
+      <input type="text" name="address" value="<%= user.address || '' %>">
+
+      <% if (loggedInUser.role === "admin") { %>
+
+        <!-- ADMIN-ONLY: Role -->
+        <label>Role</label>
+        <select name="role" required>
+          <option value="customer" <%= user.role === "customer" ? "selected" : "" %>>Customer</option>
+          <option value="admin" <%= user.role === "admin" ? "selected" : "" %>>Admin</option>
+        </select>
+
+        <!-- ADMIN-ONLY: Account Status -->
+        <label>Account Status</label>
+        <select name="accountStatus" required>
+          <option value="active" <%= user.accountStatus === "active" ? "selected" : "" %>>Active</option>
+          <option value="inactive" <%= user.accountStatus === "inactive" ? "selected" : "" %>>Inactive</option>
+        </select>
+
+        <!-- ADMIN-ONLY: Reset Password -->
+        <label>New Password (optional)</label>
+        <input 
+          type="password" 
+          name="newPassword"
+          placeholder="Leave empty to keep current password"
+        >
+
+      <% } %>
+
+      <button type="submit">Save Changes</button>
+
+    </form>
+  </div>
+
 </body>
 </html>

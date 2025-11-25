@@ -23,7 +23,7 @@
             <td><%= order.email %></td>
             <td><%= order.totalQty %></td>
             <td>₱<%= order.totalAmount.toFixed(2) %></td>
-            <td><%= order.status %></td>
+            <td><%= order.status.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()) %></td>
             <td><%= order.createdAt.toLocaleString() %></td>
           </tr>
         <% }) %>

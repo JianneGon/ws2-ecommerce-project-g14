@@ -1,17 +1,57 @@
-<h1 class="page-title">Welcome, <%= user.firstName %> <%= user.lastName %>!</h1>
+<main class="page-content">
 
-<div class="dashboard-info">
-  <p><strong>User ID:</strong> <%= user.userId %></p>
-  <p><strong>Email:</strong> <%= user.email %></p>
-  <p><strong>Email Verified:</strong> <%= user.isEmailVerified ? "Yes" : "No" %></p>
-  <p><strong>Role:</strong> <%= user.role %></p>
-  <p><strong>Status:</strong> Active</p>
+  <h1 class="page-title">Welcome, <%= user.firstName %> <%= user.lastName %>!</h1>
+
+  <!-- USER INFO -->
+  <div class="dashboard-info">
+    <p><strong>User ID:</strong> <%= user.userId %></p>
+    <p><strong>Email:</strong> <%= user.email %></p>
+    <p><strong>Email Verified:</strong> <%= user.isEmailVerified ? "Yes" : "No" %></p>
+    <p><strong>Role:</strong> <%= user.role %></p>
+    <p><strong>Status:</strong> Active</p>
+  </div>
+
+  <% if (user.role !== 'admin') { %>
+
+    <h2 class="section-title">Order Summary</h2>
+
+   <div class="order-summary-wrapper">
+  <table class="order-summary-table">
+    <tr>
+      <th>Status</th>
+      <th>Count</th>
+    </tr>
+
+    <tr><td>Total Orders</td><td><%= totalOrders %></td></tr>
+    <tr><td>To Pay</td><td><%= toPayOrders %></td></tr>
+    <tr><td>To Ship</td><td><%= toShipOrders %></td></tr>
+    <tr><td>To Receive</td><td><%= toReceiveOrders %></td></tr>
+    <tr><td>Completed</td><td><%= completedOrders %></td></tr>
+    <tr><td>Return/Refund</td><td><%= refundOrders %></td></tr>
+    <tr><td>Cancelled</td><td><%= cancelledOrders %></td></tr>
+  </table>
 </div>
 
-<div class="dashboard-actions">
-  <a href="/users/edit/<%= user.userId %>" class="btn-edit">Edit Profile</a>
-
-  <% if (user.role === 'admin') { %>
-    <a href="/users/admin" class="btn-dashboard">Admin Panel</a>
   <% } %>
-</div>
+
+  <!-- BUTTONS -->
+  <div class="dashboard-actions">
+
+    <a href="/users/profile" class="btn-dashboard">View Profile</a>
+
+    <a href="/users/edit/<%= user.userId %>" class="btn-edit">Edit Profile</a>
+
+    <% if (user.role === 'admin') { %>
+
+      <a href="/users/admin" class="btn-dashboard">Admin Panel</a>
+
+    <% } else { %>
+
+      <a href="/orders" class="btn-dashboard">My Orders</a>
+
+    <% } %>
+
+  </div>
+
+</main>
+

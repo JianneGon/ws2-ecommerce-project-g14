@@ -1,65 +1,195 @@
-<h1 class="page-title">Your Cart</h1>
+<main class="page-content">
 
-<% if (!cart || !cart.items || cart.items.length === 0) { %>
-  <p class="no-users-text">Your cart is empty.</p>
-  <p class="register-user-link">
-    <a href="/products" class="btn-primary">Shop Products</a>
-  </p>
-<% } else { %>
-
-  <div class="table-container">
-    <table>
-      <thead>
-        <tr>
-          <th>Product</th>
-          <th>Brand</th>
-          <th>Price</th>
-          <th>Qty</th>
-          <th>Subtotal</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% cart.items.forEach(item => { %>
-          <tr>
-            <td>
-              <a href="/products/<%= item.productId %>">
-                <strong><%= item.name %></strong>
-              </a>
-            </td>
-            <td><%= item.brand %></td>
-            <td>₱<%= item.price.toFixed(2) %></td>
-            <td>
-              <form action="/cart/update" method="POST" style="display:inline-flex; gap:6px; justify-content:center;">
-                <input type="hidden" name="productId" value="<%= item.productId %>">
-                <input type="number" name="quantity" value="<%= item.quantity %>" min="1" style="width:60px; padding:6px;">
-                <button type="submit" class="btn-save">Update</button>
-              </form>
-            </td>
-            <td>₱<%= item.subtotal.toFixed(2) %></td>
-            <td>
-              <form action="/cart/remove" method="POST" onsubmit="return confirm('Remove <%= item.name %> from cart?');">
-                <input type="hidden" name="productId" value="<%= item.productId %>">
-                <button type="submit" class="btn-delete">Remove</button>
-              </form>
-            </td>
-          </tr>
-        <% }) %>
-      </tbody>
-    </table>
+  <!-- CART PAGE MINI BANNER -->
+  <div class="cart-banner">
+      <h1 class="page-title cart-page-title-fix">Your Cart</h1>
   </div>
 
-  <div class="dashboard-info">
-    <p><strong>Total Items:</strong> <%= cart.totalQty %></p>
-    <p><strong>Total Amount:</strong> ₱<%= cart.totalAmount.toFixed(2) %></p>
-  </div>
+  <% if (!cart || !cart.items || cart.items.length === 0) { %>
 
-  <div class="dashboard-actions">
-    <form action="/cart/clear" method="POST" onsubmit="return confirm('Clear your entire cart?');">
-      <button type="submit" class="btn-cancel">Clear Cart</button>
-    </form>
+    <p class="no-users-text">Your cart is empty.</p>
+    <p class="register-user-link">
+      <a href="/products" class="btn-primary">Shop Products</a>
+    </p>
 
-    <a href="/cart/checkout" class="btn-primary">Proceed to Checkout</a>
-  </div>
+  <% } else { %>
 
-<% } %>
+
+    <% if (user && !user.isAdmin) { %>
+
+      <!-- ==========================
+           USER CART — SHOPIFY STYLE
+      ============================ -->
+      <section class="cart-page">
+
+        <!-- LEFT CART TABLE -->
+        <div class="cart-main-card">
+
+          <div class="cart-main-title-row">
+            <h2>Items</h2>
+            <p><%= cart.totalQty %> item<%= cart.totalQty === 1 ? '' : 's' %></p>
+          </div>
+
+          <div class="cart-main-header">
+            <span>Product</span>
+            <span>Price</span>
+            <span>Quantity</span>
+            <span>Total</span>
+          </div>
+
+          <!-- LOOP ITEMS -->
+          <% cart.items.forEach(item => { %>
+            <div class="cart-item-row">
+
+              <!-- PRODUCT COLUMN -->
+              <div class="cart-item-product">
+                <div class="cart-item-img">
+                  <a href="/products/<%= item.productId %>">
+                    <img src="<%= item.imageUrl %>" alt="<%= item.name %>">
+                  </a>
+                </div>
+
+                <div class="cart-item-info">
+                  <a href="/products/<%= item.productId %>" class="cart-item-name">
+                    <%= item.name %>
+                  </a>
+                  <p class="cart-item-brand">
+                    <%= item.brand %>
+                    <% if (item.size) { %> • Size <%= item.size %><% } %>
+                  </p>
+                </div>
+              </div>
+
+              <!-- PRICE -->
+              <div class="cart-item-price">
+                ₱<%= item.price.toLocaleString() %>
+              </div>
+
+              <!-- QUANTITY COLUMN -->
+          <div class="qty-wrapper">
+
+          <!-- UPDATE FORM -->
+            <form action="/cart/update" method="POST" class="qty-update-form">
+              <input type="hidden" name="productId" value="<%= item.productId %>">
+              <input type="hidden" name="size" value="<%= item.size %>">
+
+              <label class="qty-label">Qty:</label>
+
+              <input type="number"
+                    name="quantity"
+                    value="<%= item.quantity %>"
+                    min="1"
+                    class="qty-input">
+
+              <button type="submit" class="qty-update-btn">Update</button>
+            </form>
+
+            <!-- REMOVE FORM -->
+            <form action="/cart/remove"
+                  method="POST"
+                  class="qty-remove-form"
+                  onsubmit="return confirm('Remove <%= item.name %>?');">
+
+              <input type="hidden" name="productId" value="<%= item.productId %>">
+              <input type="hidden" name="size" value="<%= item.size %>">
+
+              <button class="qty-remove-btn">Remove</button>
+            </form>
+
+          </div>
+
+
+              <!-- TOTAL -->
+              <div class="cart-item-total">
+                ₱<%= item.subtotal.toLocaleString() %>
+              </div>
+
+            </div>
+          <% }) %>
+
+          <!-- FOOTER -->
+          <div class="cart-main-footer">
+            <a href="/products" class="cart-link-continue">Continue shopping</a>
+
+            <form action="/cart/clear" method="POST"
+                  onsubmit="return confirm('Clear your entire cart?');">
+              <button type="submit" class="cart-link-update">Clear cart</button>
+            </form>
+          </div>
+
+        </div>
+
+        <!-- SUMMARY -->
+        <aside class="cart-summary-card">
+          <h2>Order Summary</h2>
+
+          <p class="cart-summary-items">
+            <%= cart.totalQty %> item<%= cart.totalQty === 1 ? '' : 's' %>
+          </p>
+
+          <div class="cart-summary-line">
+            <span>Subtotal</span>
+            <span>₱<%= cart.totalAmount.toLocaleString() %></span>
+          </div>
+
+          <p class="cart-summary-note">
+            Shipping and taxes are calculated at checkout.
+          </p>
+
+          <a href="/cart/checkout" class="btn-primary cart-checkout-btn">
+            Proceed to Checkout
+          </a>
+        </aside>
+
+      </section>
+
+    <% } else { %>
+
+      <!-- ADMIN CART (UNCHANGED) -->
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Product</th><th>Brand</th>
+              <th>Price</th><th>Qty</th>
+              <th>Subtotal</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% cart.items.forEach(item => { %>
+              <tr>
+                <td><a href="/products/<%= item.productId %>"><strong><%= item.name %></strong></a></td>
+                <td><%= item.brand %></td>
+                <td>₱<%= item.price.toFixed(2) %></td>
+
+                <td>
+                  <form action="/cart/update" method="POST" style="display:flex; gap:6px;">
+                    <input type="hidden" name="productId" value="<%= item.productId %>">
+                    <input type="hidden" name="size" value="<%= item.size %>">
+                    <input type="number" name="quantity" value="<%= item.quantity %>"
+                           min="1" style="width:60px; padding:6px;">
+                    <button type="submit" class="btn-save">Update</button>
+                  </form>
+                </td>
+
+                <td>₱<%= item.subtotal.toFixed(2) %></td>
+
+                <td>
+                  <form action="/cart/remove" method="POST"
+                        onsubmit="return confirm('Remove <%= item.name %>?');">
+                    <input type="hidden" name="productId" value="<%= item.productId %>">
+                    <input type="hidden" name="size" value="<%= item.size %>">
+                    <button class="btn-delete">Remove</button>
+                  </form>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+
+    <% } %>
+
+  <% } %>
+
+</main>

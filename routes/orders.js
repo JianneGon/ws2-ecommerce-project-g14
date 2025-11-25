@@ -1,11 +1,15 @@
 // routes/orders.js
+// =======================================================================
+// FINAL FIXED VERSION — ROOT-LEVEL STATUS ("to_pay", "to_ship", etc.)
+// =======================================================================
+
 const express = require("express");
 const router = express.Router();
 const { ObjectId } = require("mongodb");
 const { v4: uuidv4 } = require("uuid");
 const requireLogin = require("../middlewares/requireLogin");
 
-// Helper function to load product by productId or _id
+// Helper: Find product by productId or _id
 async function findProduct(db, productId) {
   const productsCol = db.collection("products");
 
@@ -16,13 +20,14 @@ async function findProduct(db, productId) {
   return product;
 }
 
-// =====================================================================
-// GET /orders/checkout - Checkout page for a single product
-// =====================================================================
+// =======================================================================
+// GET /orders/checkout — Checkout Page
+// =======================================================================
 router.get("/checkout", requireLogin, async (req, res) => {
   try {
     const db = req.app.locals.client.db(req.app.locals.dbName);
     const productId = (req.query.productId || "").trim();
+    const selectedSize = (req.query.size || "").trim();
     let qty = parseInt(req.query.qty, 10) || 1;
 
     if (!productId) {
@@ -35,7 +40,6 @@ router.get("/checkout", requireLogin, async (req, res) => {
     }
 
     const product = await findProduct(db, productId);
-
     if (!product) {
       return res.render("error", {
         title: "Checkout Error",
@@ -54,8 +58,24 @@ router.get("/checkout", requireLogin, async (req, res) => {
       });
     }
 
-    qty = Math.min(Math.max(qty, 1), product.stock);
+    let maxAvailable = product.stock;
+    let sizeEntry = null;
 
+    // Handle per-size stock
+    if (product.sizes && product.sizes.length && selectedSize) {
+      sizeEntry = product.sizes.find((s) => s.label === selectedSize);
+      if (!sizeEntry || sizeEntry.stock <= 0) {
+        return res.render("error", {
+          title: "Out of Stock",
+          message: "The selected size is currently out of stock.",
+          backLink: `/products/${product.productId}`,
+          backText: "Back to Product",
+        });
+      }
+      maxAvailable = sizeEntry.stock;
+    }
+
+    qty = Math.min(Math.max(qty, 1), maxAvailable);
     const totalAmount = product.price * qty;
 
     res.render("checkout", {
@@ -64,9 +84,10 @@ router.get("/checkout", requireLogin, async (req, res) => {
       quantity: qty,
       totalAmount,
       user: req.session.user,
+      selectedSize: selectedSize || null,
     });
   } catch (err) {
-    console.error("Error loading checkout page:", err);
+    console.error("Checkout Page Error:", err);
     res.render("error", {
       title: "Checkout Error",
       message: "Something went wrong while loading checkout.",
@@ -76,9 +97,9 @@ router.get("/checkout", requireLogin, async (req, res) => {
   }
 });
 
-// =====================================================================
-// POST /orders/checkout - Finalize order (single product)
-// =====================================================================
+// =======================================================================
+// POST /orders/checkout — Place Order
+// =======================================================================
 router.post("/checkout", requireLogin, async (req, res) => {
   try {
     const db = req.app.locals.client.db(req.app.locals.dbName);
@@ -88,6 +109,7 @@ router.post("/checkout", requireLogin, async (req, res) => {
     const user = req.session.user;
 
     const productId = (req.body.productId || "").trim();
+    const selectedSize = (req.body.size || "").trim();
     let qty = parseInt(req.body.quantity, 10) || 1;
 
     const {
@@ -110,7 +132,6 @@ router.post("/checkout", requireLogin, async (req, res) => {
     }
 
     const product = await findProduct(db, productId);
-
     if (!product) {
       return res.render("error", {
         title: "Checkout Error",
@@ -129,11 +150,29 @@ router.post("/checkout", requireLogin, async (req, res) => {
       });
     }
 
-    qty = Math.min(Math.max(qty, 1), product.stock);
+    // Handle per-size inventory
+    let maxAvailable = product.stock;
+    let sizeEntry = null;
+
+    if (product.sizes && product.sizes.length && selectedSize) {
+      sizeEntry = product.sizes.find((s) => s.label === selectedSize);
+      if (!sizeEntry || sizeEntry.stock <= 0) {
+        return res.render("error", {
+          title: "Out of Stock",
+          message: "The selected size is currently out of stock.",
+          backLink: `/products/${product.productId}`,
+          backText: "Back to Product",
+        });
+      }
+      maxAvailable = sizeEntry.stock;
+    }
+
+    qty = Math.min(Math.max(qty, 1), maxAvailable);
 
     const subtotal = product.price * qty;
     const totalAmount = subtotal;
 
+    // FINAL FIX: Root-level "status"
     const orderDoc = {
       orderId: uuidv4(),
       userId: user.userId,
@@ -146,10 +185,11 @@ router.post("/checkout", requireLogin, async (req, res) => {
           price: product.price,
           quantity: qty,
           subtotal,
+          size: selectedSize || null,
         },
       ],
       totalAmount,
-      orderStatus: "to_pay", // FIXED!
+      status: "to_pay", // <── FIXED
       shipping: {
         fullName,
         addressLine1,
@@ -165,11 +205,29 @@ router.post("/checkout", requireLogin, async (req, res) => {
 
     await ordersCol.insertOne(orderDoc);
 
-    // Decrease stock
-    await productsCol.updateOne(
-      { productId: product.productId },
-      { $inc: { stock: -qty } }
-    );
+    // Update stock
+    if (product.sizes && selectedSize) {
+      const newSizes = product.sizes.map((s) =>
+        s.label === selectedSize
+          ? { ...s, stock: Math.max(s.stock - qty, 0) }
+          : s
+      );
+
+      const newTotalStock = newSizes.reduce(
+        (sum, s) => sum + (s.stock || 0),
+        0
+      );
+
+      await productsCol.updateOne(
+        { productId: product.productId },
+        { $set: { sizes: newSizes, stock: newTotalStock } }
+      );
+    } else {
+      await productsCol.updateOne(
+        { productId: product.productId },
+        { $inc: { stock: -qty } }
+      );
+    }
 
     res.render("success", {
       title: "Order Placed",
@@ -178,7 +236,7 @@ router.post("/checkout", requireLogin, async (req, res) => {
       backText: "View My Orders",
     });
   } catch (err) {
-    console.error("Error during checkout:", err);
+    console.error("Checkout Error:", err);
     res.render("error", {
       title: "Checkout Error",
       message: "Something went wrong while placing your order.",
@@ -188,9 +246,9 @@ router.post("/checkout", requireLogin, async (req, res) => {
   }
 });
 
-// =====================================================================
-// GET /orders - Customer order list
-// =====================================================================
+// =======================================================================
+// GET /orders — User Order List
+// =======================================================================
 router.get("/", requireLogin, async (req, res) => {
   try {
     const db = req.app.locals.client.db(req.app.locals.dbName);
@@ -207,7 +265,7 @@ router.get("/", requireLogin, async (req, res) => {
       user: req.session.user,
     });
   } catch (err) {
-    console.error("Error fetching orders:", err);
+    console.error("Orders Fetch Error:", err);
     res.render("error", {
       title: "Orders Error",
       message: "Something went wrong while fetching your orders.",
@@ -217,9 +275,9 @@ router.get("/", requireLogin, async (req, res) => {
   }
 });
 
-// =====================================================================
-// GET /orders/:orderId - Customer order details
-// =====================================================================
+// =======================================================================
+// GET /orders/:orderId — Order Details
+// =======================================================================
 router.get("/:orderId", requireLogin, async (req, res) => {
   try {
     const db = req.app.locals.client.db(req.app.locals.dbName);
@@ -245,13 +303,14 @@ router.get("/:orderId", requireLogin, async (req, res) => {
       user: req.session.user,
     });
   } catch (err) {
-    console.error("Error fetching order detail:", err);
+    console.error("Order Detail Error:", err);
     res.render("error", {
       title: "Order Error",
       message: "Something went wrong while loading order details.",
       backLink: "/orders",
       backText: "Back to Orders",
     });
-  }});
+  }
+});
 
 module.exports = router;

@@ -1,22 +1,68 @@
 <h1 class="page-title">Add New Shoe</h1>
 
 <div class="form-container">
+
+  <% 
+    const sizeOptions = ['US 6', 'US 6.5', 'US 7', 'US 7.5', 'US 8', 'US 8.5', 'US 9'];
+  %>
+
   <form action="/products/add" method="POST" enctype="multipart/form-data" class="product-form">
+
+    <!-- BASIC INFO -->
     <label for="name">Product Name:</label>
     <input type="text" id="name" name="name" placeholder="Enter product name" required>
 
     <label for="brand">Brand:</label>
     <input type="text" id="brand" name="brand" placeholder="Enter brand" required>
 
-    <label for="price">Price:</label>
-    <input type="number" id="price" name="price" placeholder="Enter price" step="0.01" required>
-
-    <label for="stock">Stock:</label>
-    <input type="number" id="stock" name="stock" placeholder="Enter stock quantity" required>
+    <label for="price">Price (₱):</label>
+    <input type="number" id="price" name="price" placeholder="Enter price" step="0.01" min="0" required>
 
     <label for="description">Description:</label>
     <textarea id="description" name="description" placeholder="Enter product description"></textarea>
 
+    <!-- SIZE TABLE -->
+    <h3 style="margin-top:20px;">Sizes & Stock</h3>
+    <p style="font-size: 0.9rem; margin-bottom: 8px;">
+      Set stock per size. <strong>0 stock = out of stock.</strong>
+    </p>
+
+    <table style="width:100%; border-collapse: collapse; margin-bottom: 10px;">
+      <thead>
+        <tr>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Size</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ddd;">Stock</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% sizeOptions.forEach((label, idx) => { %>
+          <tr>
+            <td style="padding:8px; border-bottom:1px solid #f1f1f1;"><%= label %></td>
+            <td style="padding:8px; border-bottom:1px solid #f1f1f1;">
+              <input type="hidden" name="sizes[<%= idx %>][label]" value="<%= label %>">
+              <input type="number" class="size-stock-input" name="sizes[<%= idx %>][stock]" value="0" min="0" style="width:100px;">
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+
+    <!-- LIVE TOTAL STOCK -->
+    <p id="liveTotalStock" style="font-weight:600; margin-bottom:20px;">Total Stock: 0</p>
+
+    <!-- SHIPPING INFO -->
+    <label for="shippingInfo">Shipping Info:</label>
+    <textarea id="shippingInfo" name="shippingInfo" rows="3" placeholder="Describe shipping time...">
+Shipping usually takes 3–7 business days.
+    </textarea>
+
+    <!-- RETURNS INFO -->
+    <label for="returnsInfo">Returns Policy:</label>
+    <textarea id="returnsInfo" name="returnsInfo" rows="3" placeholder="Describe return policy...">
+Returns accepted within 7 days.
+    </textarea>
+
+    <!-- IMAGE -->
     <label for="image">Upload Image:</label>
     <input type="file" id="image" name="image" accept="image/*">
 
@@ -24,5 +70,25 @@
       <button type="submit" class="btn-save">Save Product</button>
       <a href="/products" class="btn-cancel">Back to Products</a>
     </div>
+
   </form>
 </div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const inputs = document.querySelectorAll(".size-stock-input");
+    const totalEl = document.getElementById("liveTotalStock");
+
+    const calculateTotal = () => {
+      let total = 0;
+      inputs.forEach(i => {
+        total += Number(i.value) || 0;
+      });
+      totalEl.textContent = "Total Stock: " + total;
+    };
+
+    inputs.forEach(i => i.addEventListener("input", calculateTotal));
+
+    calculateTotal();
+  });
+</script>

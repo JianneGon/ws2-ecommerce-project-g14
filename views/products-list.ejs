@@ -12,6 +12,7 @@
 
 <div class="product-grid">
   <% products.forEach(product => { %>
+
     <div class="product-item">
 
       <!-- CLICKABLE IMAGE -->
@@ -29,30 +30,12 @@
         </a>
       </h2>
 
-      <!-- PRICE ONLY -->
-      <p class="product-price">₱<%= product.price.toFixed(2) %></p>
-
-      <!-- ADMIN ACTIONS ONLY -->
-      <% if (user && user.role === 'admin') { %>
-        <div class="product-actions">
-          <a 
-            href="/products/edit/<%= product.productId %>" 
-            class="btn-action btn-edit"
-          >
-            Edit
-          </a>
-
-          <form 
-            action="/products/delete/<%= product.productId %>" 
-            method="POST" 
-            style="display:inline;" 
-            onsubmit="return confirm('Delete <%= product.name %>?');"
-          >
-            <button type="submit" class="btn-action btn-delete">Delete</button>
-          </form>
-        </div>
-      <% } %>
+      <!-- PRICE -->
+      <p class="product-price">
+        ₱<%= product.price.toFixed(2) %>
+      </p>
 
     </div>
+
   <% }) %>
 </div>

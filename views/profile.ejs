@@ -1,0 +1,28 @@
+<h1 class="page-title">My Profile</h1>
+
+<div class="profile-wrapper">
+
+  <div class="profile-card">
+
+    <p><strong>First Name:</strong> <%= user.firstName %></p>
+    <p><strong>Last Name:</strong> <%= user.lastName %></p>
+    <p><strong>Email:</strong> <%= user.email %></p>
+
+    <!-- NEW FIELDS FOR LESSON 21 -->
+    <p><strong>Address:</strong> <%= user.address && user.address.trim() !== "" ? user.address : "Not set" %></p>
+    <p><strong>Contact Number:</strong> <%= user.contactNumber && user.contactNumber.trim() !== "" ? user.contactNumber : "Not set" %></p>
+
+    <p><strong>Email Verified:</strong> <%= user.isEmailVerified ? "Yes" : "No" %></p>
+    <p><strong>Role:</strong> <%= user.role %></p>
+    <p><strong>Status:</strong> <%= user.accountStatus %></p>
+    <p><strong>Created At:</strong> <%= user.createdAt.toLocaleString() %></p>
+    <p><strong>Updated At:</strong> <%= user.updatedAt.toLocaleString() %></p>
+
+  </div>
+
+  <div class="profile-buttons">
+    <a href="/users/edit/<%= user.userId %>" class="btn-edit">Edit Profile</a>
+    <a href="/users/dashboard" class="btn-dashboard">Back to Dashboard</a>
+  </div>
+
+</div>

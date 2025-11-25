@@ -19,7 +19,7 @@ if (!fs.existsSync(uploadDir)) {
 }
 
 // =======================
-// Multer Setup (with security)
+// Multer Setup
 // =======================
 const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
 
@@ -31,7 +31,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
+  limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     if (!allowedTypes.includes(file.mimetype)) {
       return cb(new Error("Only JPEG, PNG, and WEBP files allowed"));
@@ -51,20 +51,15 @@ router.get("/", async (req, res) => {
     const filter = {};
     const options = {};
 
-    // Brand
     if (req.query.brand) {
       filter.brand = { $regex: `^${req.query.brand}$`, $options: "i" };
     }
 
-    // Budget filter
     if (req.query.budget) {
       const budget = Number(req.query.budget);
-      if (!isNaN(budget)) {
-        filter.price = { $lte: budget };
-      }
+      if (!isNaN(budget)) filter.price = { $lte: budget };
     }
 
-    // Sorting
     if (req.query.sort === "latest") {
       options.sort = { createdAt: -1 };
     }
@@ -100,24 +95,44 @@ router.get("/add", isAdmin, (req, res) => {
 
 router.post("/add", isAdmin, upload.single("image"), async (req, res) => {
   try {
-    const { name, brand, description } = req.body;
+    const { name, brand, description, shippingInfo, returnsInfo } = req.body;
 
     const price = Math.max(0, parseFloat(req.body.price) || 0);
-    const stock = Math.max(0, parseInt(req.body.stock) || 0);
 
     const db = req.app.locals.client.db(req.app.locals.dbName);
     const productsCol = db.collection("products");
+
+    // Build sizes from form (per-size stock)
+    let formattedSizes = [];
+    if (req.body.sizes) {
+      formattedSizes = Object.values(req.body.sizes).map((s) => ({
+        label: s.label,
+        stock: Number(s.stock) || 0,
+      }));
+    }
+
+    // Total stock = sum of per-size stock
+    const totalStock = formattedSizes.reduce((sum, s) => sum + s.stock, 0);
 
     const newProduct = {
       productId: uuidv4(),
       name: name.trim(),
       brand: brand.trim(),
       price,
-      stock,
+      stock: totalStock,
       description,
       imageUrl: req.file
         ? "/uploads/" + req.file.filename
         : "/images/placeholder-shoe.jpg",
+      sizes: formattedSizes,
+      shippingInfo:
+        shippingInfo && shippingInfo.trim()
+          ? shippingInfo.trim()
+          : "Shipping usually takes 3–7 business days.",
+      returnsInfo:
+        returnsInfo && returnsInfo.trim()
+          ? returnsInfo.trim()
+          : "Returns accepted within 7 days.",
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -179,13 +194,15 @@ router.get("/edit/:id", isAdmin, async (req, res) => {
   }
 });
 
+// =======================
+// UPDATED POST EDIT (Option B)
+// =======================
 router.post("/edit/:id", isAdmin, upload.single("image"), async (req, res) => {
   try {
     const db = req.app.locals.client.db(req.app.locals.dbName);
     const productsCol = db.collection("products");
 
     let product = await productsCol.findOne({ productId: req.params.id });
-
     if (!product && ObjectId.isValid(req.params.id)) {
       product = await productsCol.findOne({ _id: new ObjectId(req.params.id) });
     }
@@ -199,19 +216,33 @@ router.post("/edit/:id", isAdmin, upload.single("image"), async (req, res) => {
       });
     }
 
+    // BASIC FIELDS
     const updateData = {
       name: req.body.name.trim(),
       brand: req.body.brand.trim(),
       price: Math.max(0, parseFloat(req.body.price) || 0),
-      stock: Math.max(0, parseInt(req.body.stock) || 0),
       description: req.body.description,
+      shippingInfo: req.body.shippingInfo || "",
+      returnsInfo: req.body.returnsInfo || "",
       updatedAt: new Date(),
     };
 
-    // Handle image change
+    // SIZES (Option B)
+    let formattedSizes = [];
+    if (req.body.sizes) {
+      formattedSizes = Object.values(req.body.sizes).map((s) => ({
+        label: s.label,
+        stock: Number(s.stock) || 0,
+      }));
+    }
+
+    updateData.sizes = formattedSizes;
+    updateData.stock = formattedSizes.reduce((sum, s) => sum + s.stock, 0);
+
+    // IMAGE
     if (req.file) {
-      // Delete old image
       if (
+        product.imageUrl &&
         product.imageUrl.startsWith("/uploads/") &&
         product.imageUrl !== "/images/placeholder-shoe.jpg"
       ) {
@@ -222,10 +253,8 @@ router.post("/edit/:id", isAdmin, upload.single("image"), async (req, res) => {
       updateData.imageUrl = "/uploads/" + req.file.filename;
     }
 
-    await productsCol.updateOne(
-      { _id: product._id },
-      { $set: updateData }
-    );
+    // SAVE
+    await productsCol.updateOne({ _id: product._id }, { $set: updateData });
 
     res.render("success", {
       title: "Product Updated",
@@ -253,7 +282,6 @@ router.post("/delete/:id", isAdmin, async (req, res) => {
     const productsCol = db.collection("products");
 
     let product = await productsCol.findOne({ productId: req.params.id });
-
     if (!product && ObjectId.isValid(req.params.id)) {
       product = await productsCol.findOne({ _id: new ObjectId(req.params.id) });
     }
@@ -267,7 +295,6 @@ router.post("/delete/:id", isAdmin, async (req, res) => {
       });
     }
 
-    // Delete image
     if (
       product.imageUrl.startsWith("/uploads/") &&
       product.imageUrl !== "/images/placeholder-shoe.jpg"
@@ -296,7 +323,7 @@ router.post("/delete/:id", isAdmin, async (req, res) => {
 });
 
 // =======================
-// PRODUCT DETAIL
+// UPDATED PRODUCT DETAIL WITH RECOMMENDATIONS
 // =======================
 router.get("/:id", async (req, res) => {
   try {
@@ -304,12 +331,10 @@ router.get("/:id", async (req, res) => {
     const db = req.app.locals.client.db(req.app.locals.dbName);
     const productsCol = db.collection("products");
 
-    if (!id || id.length < 6) {
-      return res.redirect("/products");
-    }
+    if (!id || id.length < 6) return res.redirect("/products");
 
+    // 1️ Load the selected product
     let product = await productsCol.findOne({ productId: id });
-
     if (!product && ObjectId.isValid(id)) {
       product = await productsCol.findOne({ _id: new ObjectId(id) });
     }
@@ -323,11 +348,62 @@ router.get("/:id", async (req, res) => {
       });
     }
 
+    // 2️ Ensure fallback sizes
+    if (!product.sizes || product.sizes.length === 0) {
+      const defaultSizes = [
+        "US 6",
+        "US 6.5",
+        "US 7",
+        "US 7.5",
+        "US 8",
+        "US 8.5",
+        "US 9",
+      ];
+
+      product.sizes = defaultSizes.map((label) => ({
+        label,
+        stock: product.stock || 0,
+      }));
+    }
+
+    // -------------------------------------------
+    // ⭐ YOU MAY ALSO LIKE — BRAND BASED
+    // -------------------------------------------
+
+    // Step 1: Get 4 products with same brand except current product
+    let recommendations = await productsCol
+      .find({
+        brand: product.brand,
+        productId: { $ne: product.productId },
+      })
+      .limit(4)
+      .toArray();
+
+    // Step 2: If kulang ng 4 → random fallback
+    if (recommendations.length < 4) {
+      const needed = 4 - recommendations.length;
+
+      const randoms = await productsCol
+        .aggregate([
+          { $match: { productId: { $ne: product.productId } } },
+          { $sample: { size: needed } },
+        ])
+        .toArray();
+
+      recommendations = [...recommendations, ...randoms];
+    }
+
+    // -------------------------------------------
+
     res.render("product-detail", {
       title: product.name,
       product,
+      recommendations, // IMPORTANT
       user: req.session.user,
+      shippingInfoDefault: req.app.locals.shippingInfoDefault,
+      returnsInfoDefault: req.app.locals.returnsInfoDefault
     });
+
   } catch (err) {
     console.error("Product detail error:", err);
     res.render("error", {
@@ -338,5 +414,6 @@ router.get("/:id", async (req, res) => {
     });
   }
 });
+
 
 module.exports = router;

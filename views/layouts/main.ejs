@@ -8,11 +8,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
-  <!-- HEADER -->
+
+  <!-- HEADER / NAVBAR -->
   <header class="navbar">
     <a href="/" class="navbar-brand">Commonwealth</a>
 
-    <!-- Hamburger for mobile -->
     <div class="hamburger" onclick="toggleMenu()">
       <span></span>
       <span></span>
@@ -24,30 +24,31 @@
       <li><a href="/products">Shoes</a></li>
       <li><a href="/about">About</a></li>
 
-      <!-- Admin-only: Manage Users -->
-      <% if (typeof user !== 'undefined' && user && user.role === 'admin') { %>
+      <% if (user && user.role === 'admin') { %>
         <li><a href="/users/list">Manage Users</a></li>
       <% } %>
 
       <li><a href="/contact">Contact</a></li>
 
-      <% if (typeof user !== 'undefined' && user) { %>
+      <!-- CART -->
+      <% if (!user || user.role === 'customer') { %>
+        <li class="nav-cart">
+          <a href="/cart" class="cart-link">Cart <span id="navCartCount">(<%= cartCount %>)</span></a>
+        </li>
+        <% } %>
+
+      <% if (user) { %>
         <li><a href="/users/dashboard">Dashboard</a></li>
 
         <% if (user.role === 'customer') { %>
-          <!-- CUSTOMER: My Orders link -->
           <li><a href="/orders">My Orders</a></li>
         <% } %>
 
         <% if (user.role === 'admin') { %>
-          <li><a href="/users/admin">Admin</a></li>
-
-          <!-- ADMIN: Orders Management link -->
           <li><a href="/admin/orders">Orders</a></li>
         <% } %>
 
         <li><a href="/users/logout">Logout</a></li>
-
       <% } else { %>
         <li><a href="/users/register">Register</a></li>
         <li><a href="/users/login">Login</a></li>
@@ -55,7 +56,7 @@
     </ul>
   </header>
 
-  <!-- MAIN CONTENT -->
+  <!-- PAGE CONTENT -->
   <main class="page-content">
     <%- body %>
   </main>
@@ -64,7 +65,6 @@
   <footer class="footer">
     <div class="footer-container">
       
-      <!-- CONTACT -->
       <div class="footer-column">
         <h4>Contact</h4>
         <ul>
@@ -74,7 +74,6 @@
         </ul>
       </div>
 
-      <!-- SUPPORT -->
       <div class="footer-column">
         <h4>Support</h4>
         <ul>
@@ -86,7 +85,6 @@
         </ul>
       </div>
 
-      <!-- NEWSLETTER -->
       <div class="footer-column newsletter">
         <h4>Newsletter</h4>
         <form class="newsletter-form" onsubmit="return false;">
@@ -94,8 +92,8 @@
           <input type="text" placeholder="Shoe Size" />
           <button type="submit">Subscribe</button>
         </form>
-      </div>
 
+      </div>
     </div>
 
     <div class="footer-bottom">
@@ -103,24 +101,13 @@
     </div>
   </footer>
 
-  <!-- Font Awesome -->
   <script src="https://kit.fontawesome.com/a2e0ad1c42.js" crossorigin="anonymous"></script>
 
   <script>
     function toggleMenu() {
       document.getElementById('navLinks').classList.toggle('show');
     }
-    function togglePassword() {
-      const passwordInput = document.getElementById("password");
-      const toggleBtn = document.querySelector(".toggle-password");
-      if (passwordInput.type === "password") {
-        passwordInput.type = "text";
-        toggleBtn.textContent = "Hide";
-      } else {
-        passwordInput.type = "password";
-        toggleBtn.textContent = "Show";
-      }
-    }
   </script>
+
 </body>
 </html>

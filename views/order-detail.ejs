@@ -1,48 +1,106 @@
 <h1 class="page-title">Order <%= order.orderId %></h1>
 
-<div class="dashboard-info">
-  <p><strong>Status:</strong> <%= order.status %></p>
-  <p><strong>Placed on:</strong> <%= order.createdAt.toLocaleString() %></p>
-  <p><strong>Total Items:</strong> <%= order.totalQty %></p>
-  <p><strong>Total Amount:</strong> ₱<%= order.totalAmount.toFixed(2) %></p>
-</div>
+<div class="order-detail-container">
 
-<h2 class="page-title" style="margin-top:30px;">Items</h2>
+  <!-- ====================
+       ITEMS (FULL WIDTH)
+  ===================== -->
+  <div class="order-card items-card">
+    <h2 class="card-title">Items</h2>
 
-<div class="table-container">
-  <table>
-    <thead>
-      <tr>
-        <th>Product</th>
-        <th>Brand</th>
-        <th>Price</th>
-        <th>Qty</th>
-        <th>Subtotal</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% order.items.forEach(item => { %>
-        <tr>
-          <td><%= item.name %></td>
-          <td><%= item.brand %></td>
-          <td>₱<%= item.price.toFixed(2) %></td>
-          <td><%= item.quantity %></td>
-          <td>₱<%= item.subtotal.toFixed(2) %></td>
-        </tr>
-      <% }) %>
-    </tbody>
-  </table>
-</div>
+    <!-- TABLE HEADER -->
+    <div class="item-header-row">
+      <span class="header-product">Product</span>
+      <span class="header-price">Price</span>
+      <span class="header-qty">Quantity</span>
+      <span class="header-total">Total</span>
+    </div>
 
-<h2 class="page-title" style="margin-top:30px;">Shipping Info</h2>
+    <% order.items.forEach(item => { %>
+      <div class="item-row-modern">
 
-<div class="dashboard-info">
-  <p><strong>Name:</strong> <%= order.shipping.fullName %></p>
-  <p><strong>Address:</strong> <%= order.shipping.addressLine1 %>, <%= order.shipping.addressLine2 %></p>
-  <p><strong>City:</strong> <%= order.shipping.city %></p>
-  <p><strong>Region:</strong> <%= order.shipping.region %></p>
-  <p><strong>Postal Code:</strong> <%= order.shipping.postalCode %></p>
-  <p><strong>Phone:</strong> <%= order.shipping.phone %></p>
+        <!-- PRODUCT COLUMN -->
+        <div class="col-product">
+          <img class="item-image"
+               src="<%= item.imageUrl || '/images/placeholder-shoe.jpg' %>"
+               alt="<%= item.name %>">
+
+          <div class="product-info">
+            <p class="product-name"><%= item.name %></p>
+            <p class="product-meta">
+              <%= item.brand %> · Size <%= item.size || 'N/A' %>
+            </p>
+          </div>
+        </div>
+
+        <!-- PRICE COLUMN -->
+        <div class="col-price">
+          ₱<%= item.price.toFixed(2) %>
+        </div>
+
+        <!-- QUANTITY COLUMN -->
+        <div class="col-qty">
+          <%= item.quantity %>
+        </div>
+
+        <!-- TOTAL COLUMN -->
+        <div class="col-total">
+          ₱<%= item.subtotal.toFixed(2) %>
+        </div>
+
+      </div>
+    <% }) %>
+
+  </div>
+
+
+  <!-- ================================
+        SHIPPING + ORDER SUMMARY ROW
+  ================================= -->
+  <div class="info-summary-row">
+
+    <!-- SHIPPING (LEFT) -->
+    <div class="merged-card">
+      <h2 class="card-title">Shipping Information</h2>
+
+      <div class="shipping-row"><strong>Name:</strong> <%= order.shipping.fullName %></div>
+      <div class="shipping-row"><strong>Address:</strong>
+        <%= order.shipping.addressLine1 %>,
+        <%= order.shipping.addressLine2 %>
+      </div>
+      <div class="shipping-row"><strong>City:</strong> <%= order.shipping.city %></div>
+      <div class="shipping-row"><strong>Region:</strong> <%= order.shipping.region %></div>
+      <div class="shipping-row"><strong>Postal Code:</strong> <%= order.shipping.postalCode %></div>
+      <div class="shipping-row"><strong>Phone:</strong> <%= order.shipping.phone %></div>
+    </div>
+
+    <!-- SUMMARY (RIGHT) -->
+    <div class="merged-card">
+      <h2 class="card-title">Order Summary</h2>
+
+      <div class="summary-row">
+        <span>Status:</span>
+        <strong><%= order.status.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()) %></strong>
+      </div>
+
+      <div class="summary-row">
+        <span>Placed On:</span>
+        <strong><%= order.createdAt.toLocaleString() %></strong>
+      </div>
+
+      <div class="summary-row">
+        <span>Total Items:</span>
+        <strong><%= order.totalQty %></strong>
+      </div>
+
+      <div class="summary-row total-amount">
+        <span>Total Amount:</span>
+        <strong>₱<%= order.totalAmount.toFixed(2) %></strong>
+      </div>
+    </div>
+
+  </div>
+
 </div>
 
 <div class="dashboard-actions">
