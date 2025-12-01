@@ -133,6 +133,8 @@ const infoRoute = require('./routes/info');
 const cartRoute = require('./routes/cart');
 const ordersRoute = require('./routes/orders');
 const adminOrdersRoute = require('./routes/adminOrders');
+const adminReportsRoute = require("./routes/adminReports");
+
 
 // =======================
 // Mount Routes (ORDER MATTERS)
@@ -146,6 +148,7 @@ app.use('/password', passwordRoute);
 app.use('/cart', cartRoute);
 app.use('/orders', ordersRoute);
 app.use('/admin', adminOrdersRoute);
+app.use("/admin", adminReportsRoute);
 
 // General pages LAST
 app.use('/', indexRoute);      // homepage, shop, etc.

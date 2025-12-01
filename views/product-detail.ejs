@@ -103,31 +103,29 @@
       <form id="addToCartForm" class="cart-section">
         <input type="hidden" name="productId" value="<%= product.productId %>">
         <input type="hidden" name="size" id="selectedSize" value="">
-
+        <label>Quantity:</label>
         <div class="qty-container">
-          <label>Quantity</label>
-          <input 
-            type="number"
-            name="quantity" 
-            value="1"
-            min="1"
-            max="<%= product.stock %>"
-            class="qty-input"
-          >
-        </div>
+            <input 
+              type="number"
+              name="quantity" 
+              value="1"
+              min="1"
+              max="<%= product.stock %>"
+              class="qty-input">
+          </div>
 
-        <button type="submit" class="btn-primary add-cart-btn">ADD TO CART</button>
-
-        <button 
-          type="button" 
-          id="proceedCheckoutBtn" 
-          class="btn-cancel" 
-          style="white-space:nowrap;">
-          Proceed to Checkout
-        </button>
-
-      </form>
-    <% } %>
+          <div class="cart-action-buttons">
+          <button type="submit" class="btn-primary add-cart-btn">ADD TO CART</button>
+          <button 
+            type="button" 
+            id="proceedCheckoutBtn"
+            class="proceed-checkout-btn"
+            style="white-space:nowrap;">
+            Proceed to Checkout
+          </button>
+          </div>
+                </form>
+              <% } %>
 
     <!-- ADMIN BUTTONS -->
     <% if (user && user.role === "admin") { %>

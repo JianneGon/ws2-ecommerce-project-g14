@@ -14,12 +14,26 @@
 
   <% } else { %>
 
+    <!-- =====================================================
+         CASE 1 — ADMIN USERS (DO NOT USE CART)
+    ====================================================== -->
+    <% if (user && user.isAdmin) { %>
 
-    <% if (user && !user.isAdmin) { %>
+      <div style="text-align:center; margin:50px auto;">
+        <h2>Admins do not use the shopping cart.</h2>
+        <p>This feature is only for customers.</p>
+        <a href="/dashboard" class="btn-primary" style="margin-top:20px;">
+          Go to Admin Dashboard
+        </a>
+      </div>
 
-      <!-- ==========================
-           USER CART — SHOPIFY STYLE
-      ============================ -->
+    <% } else { %>
+
+      <!-- =====================================================
+           CASE 2 — GUESTS + LOGGED-IN CUSTOMERS
+           Same UI for both (Shopify-style layout)
+      ====================================================== -->
+
       <section class="cart-page">
 
         <!-- LEFT CART TABLE -->
@@ -66,38 +80,37 @@
               </div>
 
               <!-- QUANTITY COLUMN -->
-          <div class="qty-wrapper">
+              <div class="qty-wrapper">
 
-          <!-- UPDATE FORM -->
-            <form action="/cart/update" method="POST" class="qty-update-form">
-              <input type="hidden" name="productId" value="<%= item.productId %>">
-              <input type="hidden" name="size" value="<%= item.size %>">
+                <!-- UPDATE FORM -->
+                <form action="/cart/update" method="POST" class="qty-update-form">
+                  <input type="hidden" name="productId" value="<%= item.productId %>">
+                  <input type="hidden" name="size" value="<%= item.size %>">
 
-              <label class="qty-label">Qty:</label>
+                  <label class="qty-label">Qty:</label>
 
-              <input type="number"
-                    name="quantity"
-                    value="<%= item.quantity %>"
-                    min="1"
-                    class="qty-input">
+                  <input type="number"
+                        name="quantity"
+                        value="<%= item.quantity %>"
+                        min="1"
+                        class="qty-input">
 
-              <button type="submit" class="qty-update-btn">Update</button>
-            </form>
+                  <button type="submit" class="qty-update-btn">Update</button>
+                </form>
 
-            <!-- REMOVE FORM -->
-            <form action="/cart/remove"
-                  method="POST"
-                  class="qty-remove-form"
-                  onsubmit="return confirm('Remove <%= item.name %>?');">
+                <!-- REMOVE FORM -->
+                <form action="/cart/remove"
+                      method="POST"
+                      class="qty-remove-form"
+                      onsubmit="return confirm('Remove <%= item.name %>?');">
 
-              <input type="hidden" name="productId" value="<%= item.productId %>">
-              <input type="hidden" name="size" value="<%= item.size %>">
+                  <input type="hidden" name="productId" value="<%= item.productId %>">
+                  <input type="hidden" name="size" value="<%= item.size %>">
 
-              <button class="qty-remove-btn">Remove</button>
-            </form>
+                  <button class="qty-remove-btn">Remove</button>
+                </form>
 
-          </div>
-
+              </div>
 
               <!-- TOTAL -->
               <div class="cart-item-total">
@@ -142,51 +155,6 @@
         </aside>
 
       </section>
-
-    <% } else { %>
-
-      <!-- ADMIN CART (UNCHANGED) -->
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Product</th><th>Brand</th>
-              <th>Price</th><th>Qty</th>
-              <th>Subtotal</th><th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% cart.items.forEach(item => { %>
-              <tr>
-                <td><a href="/products/<%= item.productId %>"><strong><%= item.name %></strong></a></td>
-                <td><%= item.brand %></td>
-                <td>₱<%= item.price.toFixed(2) %></td>
-
-                <td>
-                  <form action="/cart/update" method="POST" style="display:flex; gap:6px;">
-                    <input type="hidden" name="productId" value="<%= item.productId %>">
-                    <input type="hidden" name="size" value="<%= item.size %>">
-                    <input type="number" name="quantity" value="<%= item.quantity %>"
-                           min="1" style="width:60px; padding:6px;">
-                    <button type="submit" class="btn-save">Update</button>
-                  </form>
-                </td>
-
-                <td>₱<%= item.subtotal.toFixed(2) %></td>
-
-                <td>
-                  <form action="/cart/remove" method="POST"
-                        onsubmit="return confirm('Remove <%= item.name %>?');">
-                    <input type="hidden" name="productId" value="<%= item.productId %>">
-                    <input type="hidden" name="size" value="<%= item.size %>">
-                    <button class="btn-delete">Remove</button>
-                  </form>
-                </td>
-              </tr>
-            <% }) %>
-          </tbody>
-        </table>
-      </div>
 
     <% } %>
 

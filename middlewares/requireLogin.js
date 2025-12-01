@@ -1,10 +1,12 @@
 // middlewares/requireLogin.js
-function requireLogin(req, res, next) {
+module.exports = function requireLogin(req, res, next) {
   if (!req.session.user) {
-    // same behavior as isAuthenticated
-    return res.redirect("/users/login?message=timeout");
+    return res.status(403).render("error", {
+      title: "Access Denied",
+      message: "You must be logged in to access this page.",
+      backLink: "/users/login",
+      backText: "Back to Login",
+    });
   }
   next();
-}
-
-module.exports = requireLogin;
+};

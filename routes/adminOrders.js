@@ -21,18 +21,18 @@ router.get("/orders", isAdmin, async (req, res) => {
     // Collect unique userIds
     const userIds = [...new Set(orders.map(o => o.userId))];
 
-    // Fetch user documents
+    // Fetch users
     const users = await usersCol
       .find({ userId: { $in: userIds } })
       .toArray();
 
-    // Build map: userId -> email
+    // Build map of userId -> email
     const userMap = {};
     users.forEach(u => {
       userMap[u.userId] = u.email;
     });
 
-    // Attach userEmail to each order for display
+    // Attach user email to each order
     const result = orders.map(order => ({
       ...order,
       userEmail: userMap[order.userId] || order.email || "Unknown"
@@ -80,7 +80,7 @@ router.get("/orders/:orderId", isAdmin, async (req, res) => {
       title: `Order ${order.orderId}`,
       order,
       currentUser: req.session.user,
-      adminView: true,   // optional flag for view differences
+      adminView: true,
     });
 
   } catch (err) {
@@ -91,6 +91,34 @@ router.get("/orders/:orderId", isAdmin, async (req, res) => {
       backLink: "/admin/orders",
       backText: "Back to Orders",
     });
+  }
+});
+
+// =======================================================
+// POST /admin/orders/update/:orderId – update order status
+// =======================================================
+router.post("/orders/update/:orderId", isAdmin, async (req, res) => {
+  try {
+    const db = req.app.locals.client.db(req.app.locals.dbName);
+    const ordersCol = db.collection("orders");
+
+    const newStatus = req.body.status;
+
+    await ordersCol.updateOne(
+      { orderId: req.params.orderId },
+      {
+        $set: {
+          status: newStatus,
+          updatedAt: new Date(),
+        },
+      }
+    );
+
+    res.redirect("/admin/orders?success=1");
+
+  } catch (err) {
+    console.error("Order status update error:", err);
+    res.redirect("/admin/orders?error=1");
   }
 });
 

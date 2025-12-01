@@ -1,0 +1,241 @@
+<h1 class="page-title">Admin – Sales Overview</h1>
+
+<div class="admin-reports-container">
+
+  <!-- Simple nav / breadcrumbs -->
+  <p class="admin-breadcrumbs no-print">
+    <a href="/products/admin/products">Back to Products</a>
+    |
+    <a href="/admin/orders">View Orders</a>
+  </p>
+
+  <!-- FILTERS -->
+  <section class="admin-reports-section no-print">
+    <h2>Filters</h2>
+
+    <form method="GET" action="/admin/reports/sales" class="report-filters">
+
+      <!-- Start Date -->
+      <div class="filter-field">
+        <label>Start Date</label>
+        <input 
+          type="date"
+          name="startDate"
+          value="<%= 
+            filters.startDate 
+              ? (filters.startDate.includes('/') 
+                  ? filters.startDate.split('/').reverse().join('-')
+                  : filters.startDate.substring(0,10))
+              : '' 
+          %>"
+        >
+      </div>
+
+      <!-- End Date -->
+      <div class="filter-field">
+        <label>End Date</label>
+        <input 
+          type="date"
+          name="endDate"
+          value="<%= 
+            filters.endDate 
+              ? (filters.endDate.includes('/') 
+                  ? filters.endDate.split('/').reverse().join('-')
+                  : filters.endDate.substring(0,10))
+              : '' 
+          %>"
+        >
+      </div>
+
+      <!-- Status Filter -->
+      <div class="filter-field">
+        <label>Status</label>
+        <select name="status">
+          <option value="all"        <%= filters.status === 'all' ? 'selected' : '' %>>All</option>
+          <option value="completed"  <%= filters.status === 'completed' ? 'selected' : '' %>>Completed</option>
+          <option value="to_pay"     <%= filters.status === 'to_pay' ? 'selected' : '' %>>To Pay</option>
+          <option value="to_ship"    <%= filters.status === 'to_ship' ? 'selected' : '' %>>To Ship</option>
+          <option value="to_receive" <%= filters.status === 'to_receive' ? 'selected' : '' %>>To Receive</option>
+          <option value="refund"     <%= filters.status === 'refund' ? 'selected' : '' %>>Refund</option>
+          <option value="cancelled"  <%= filters.status === 'cancelled' ? 'selected' : '' %>>Cancelled</option>
+        </select>
+      </div>
+
+      <button class="filter-apply-btn" type="submit">Apply Filters</button>
+
+    </form>
+  </section>
+
+  <!-- ===========================
+       REPORT ACTION BUTTONS
+       (Lesson 24 – Part 2)
+  ============================ -->
+  <section class="admin-reports-section no-print">
+    <h2>Report Actions</h2>
+
+    <div class="report-actions">
+
+      <!-- DAILY SALES XLSX -->
+      <a 
+        href="/admin/reports/sales/export/daily?<%= 
+            `startDate=${filters.startDate}&endDate=${filters.endDate}&status=${filters.status}` 
+        %>"
+        class="btn-primary"
+      >
+        Download Daily Sales (XLSX)
+      </a>
+
+      <!-- DETAILED ORDERS XLSX -->
+      <a 
+        href="/admin/reports/sales/export/orders?<%= 
+            `startDate=${filters.startDate}&endDate=${filters.endDate}&status=${filters.status}` 
+        %>"
+        class="btn-primary"
+      >
+        Download Detailed Orders (XLSX)
+      </a>
+
+      <!-- PRINT REPORT -->
+      <button 
+        onclick="window.print()" 
+        class="btn-primary"
+        type="button"
+      >
+        Print / Save as PDF
+      </button>
+
+      <button id="downloadChartBtn" class="btn-primary no-print">
+        Download Chart (PNG)
+      </button>
+
+      <a href="/admin/reports/sales/export/monthly?<%= `startDate=${filters.startDate}&endDate=${filters.endDate}&status=${filters.status}` %>"
+   class="btn btn-primary no-print">
+   Download Monthly Sales (XLSX)
+</a>
+
+    </div>
+  </section>
+
+  <!-- SUMMARY -->
+  <section class="admin-reports-section">
+    <h2>Summary</h2>
+
+    <% if (dailySales.length === 0) { %>
+      <p>No sales data found for the selected filters.</p>
+    <% } else { %>
+      <p><strong>Total Sales:</strong> ₱<%= summary.totalSales.toLocaleString() %></p>
+      <p><strong>Total Orders:</strong> <%= summary.totalOrders %></p>
+      <p><strong>Average Order Value:</strong> ₱<%= summary.averageOrderValue.toFixed(2) %></p>
+    <% } %>
+  </section>
+
+  <!-- DAILY SALES TABLE -->
+  <section class="admin-reports-section">
+    <h2>Daily Sales Table</h2>
+
+    <% if (dailySales.length === 0) { %>
+      <p>No daily sales found for selected filters.</p>
+    <% } else { %>
+      <table class="admin-reports-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Total Sales</th>
+            <th>Number of Orders</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% dailySales.forEach(day => { %>
+            <tr>
+              <td><%= day._id %></td>
+              <td>₱<%= Number(day.totalSales).toFixed(2) %></td>
+              <td><%= day.orderCount %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </section>
+
+  <!-- SALES CHART -->
+  <section class="admin-reports-section">
+    <h2>Sales Chart</h2>
+
+    <% if (dailySales.length === 0) { %>
+      <p>No chart data available.</p>
+    <% } else { %>
+
+      <div class="chart-container">
+        <canvas id="salesChart" width="1600" height="900"></canvas>
+      </div>
+
+    <% } %>
+  </section>
+
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  <% if (dailySales.length > 0) { %>
+
+  const labels = <%- JSON.stringify(labels) %>;
+  const salesData = <%- JSON.stringify(salesData) %>;
+
+  const ctx = document.getElementById("salesChart").getContext("2d");
+
+  new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: labels,
+      datasets: [{
+        label: "Daily Sales (₱)",
+        data: salesData,
+        backgroundColor: "rgba(0, 85, 255, 0.25)",
+        borderColor: "rgba(0, 85, 255, 1)",
+        borderWidth: 2,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: function(value) {
+              return "₱" + value.toLocaleString();
+            },
+          },
+        },
+      },
+    },
+  });
+
+ document.getElementById("downloadChartBtn").addEventListener("click", () => {
+    const canvas = document.getElementById("salesChart");
+    const ctx = canvas.getContext("2d");
+
+    // Create a temporary canvas
+    const tmpCanvas = document.createElement("canvas");
+    tmpCanvas.width = canvas.width;
+    tmpCanvas.height = canvas.height;
+    const tmpCtx = tmpCanvas.getContext("2d");
+
+    // Fill white background
+    tmpCtx.fillStyle = "#ffffff";
+    tmpCtx.fillRect(0, 0, tmpCanvas.width, tmpCanvas.height);
+
+    // Draw original chart over white background
+    tmpCtx.drawImage(canvas, 0, 0);
+
+    // Download the result
+    const link = document.createElement("a");
+    link.download = "sales_chart.png";
+    link.href = tmpCanvas.toDataURL("image/png");
+    link.click();
+});
+
+  <% } %>
+</script>

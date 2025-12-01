@@ -101,8 +101,37 @@
 
   </div>
 
+  <!-- ================================
+        ADMIN ORDER STATUS UPDATE
+  ================================= -->
+  <% if (user && user.role === 'admin') { %>
+    <div class="admin-update-card">
+
+      <h2 class="card-title">Update Order Status</h2>
+
+      <form method="POST" action="/admin/orders/update/<%= order.orderId %>" class="update-status-form">
+
+        <label for="status">Select new status:</label>
+        <select name="status" id="status" required>
+          <option value="to_pay" <%= order.status === "to_pay" ? "selected" : "" %>>To Pay</option>
+          <option value="to_ship" <%= order.status === "to_ship" ? "selected" : "" %>>To Ship</option>
+          <option value="to_receive" <%= order.status === "to_receive" ? "selected" : "" %>>To Receive</option>
+          <option value="completed" <%= order.status === "completed" ? "selected" : "" %>>Completed</option>
+          <option value="refund" <%= order.status === "refund" ? "selected" : "" %>>Refund</option>
+          <option value="cancelled" <%= order.status === "cancelled" ? "selected" : "" %>>Cancelled</option>
+        </select>
+
+        <button type="submit" class="btn-primary update-btn">Update Status</button>
+      </form>
+    </div>
+  <% } %>
+
 </div>
 
 <div class="dashboard-actions">
-  <a href="/orders" class="btn-back">Back to Orders</a>
+  <% if (user && user.role === 'admin') { %>
+    <a href="/admin/orders" class="btn-back">Back to Orders</a>
+  <% } else { %>
+    <a href="/orders" class="btn-back">Back to Orders</a>
+  <% } %>
 </div>

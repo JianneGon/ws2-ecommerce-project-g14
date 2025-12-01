@@ -1,0 +1,171 @@
+<h1 class="page-title">Admin – Products</h1>
+
+<div class="admin-products-container">
+
+  <!-- Success / Error Message -->
+  <% if (message) { 
+       const alertClass = message.type === "success" ? "alert-success" : "alert-error";
+  %>
+    <div class="admin-alert <%= alertClass %>">
+      <%= message.text %>
+    </div>
+  <% } %>
+
+  <!-- FILTER BAR -->
+  <form action="/products/admin/products" method="GET" class="admin-filter-row">
+
+    <input 
+      type="text"
+      name="searchName"
+      placeholder="Search name..."
+      value="<%= searchName || '' %>"
+      class="filter-input"
+    >
+
+    <input 
+      type="text"
+      name="searchCategory"
+      placeholder="Category"
+      value="<%= searchCategory || '' %>"
+      class="filter-input"
+    >
+
+    <div class="filter-btn-row">
+      <button type="submit" class="btn-primary filter-btn">Search</button>
+      <a href="/products/admin/products" class="btn-cancel filter-btn">Clear</a>
+    </div>
+
+  </form>
+
+  <!-- HEADER ACTIONS (Add + Edit/Delete Selected) -->
+  <div class="admin-action-header">
+
+    <a href="/products/add" class="add-product-link">
+      Add New Product
+    </a>
+
+    <div class="admin-mass-actions">
+      <button type="button" id="editSelectedBtn" class="mass-btn blue">Edit Selected</button>
+      <button type="button" id="deleteSelectedBtn" class="mass-btn red">Delete Selected</button>
+    </div>
+
+  </div>
+
+  <!-- PRODUCTS TABLE -->
+  <div class="admin-table-wrapper">
+    <table class="admin-products-table">
+      <thead>
+        <tr>
+          <th></th> <!-- Checkbox -->
+          <th>Name</th>
+          <th>Brand</th>
+          <th>Category</th>
+          <th>Price</th>
+          <th>Stock</th>
+          <th>Created</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <% if (products.length === 0) { %>
+          <tr>
+            <td colspan="7" class="no-results">No products found.</td>
+          </tr>
+        <% } %>
+
+        <% products.forEach(p => { %>
+          <tr>
+
+            <!-- CHECKBOX -->
+            <td>
+              <input 
+                type="checkbox"
+                class="product-checkbox"
+                value="<%= p.productId %>"
+              >
+            </td>
+
+            <!-- IMAGE + NAME -->
+            <td class="product-cell">
+              <img 
+                src="<%= p.imageUrl %>"
+                class="product-thumb"
+                onerror="this.src='/images/placeholder-shoe.jpg'"
+              >
+              <span><%= p.name %></span>
+            </td>
+
+            <td><%= p.brand || '-' %></td>
+            <td><%= p.category || '-' %></td>
+            <td>₱<%= p.price.toLocaleString() %></td>
+            <td><%= p.stock || 0 %></td>
+
+            <td>
+              <%= p.createdAt ? new Date(p.createdAt).toLocaleDateString() : "-" %>
+            </td>
+
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- =============================
+     MASS ACTIONS SCRIPT
+============================= -->
+<script>
+
+// EDIT SELECTED
+document.getElementById('editSelectedBtn').addEventListener('click', () => {
+  const checked = document.querySelectorAll('.product-checkbox:checked');
+
+  if (checked.length === 0) {
+    alert("Select a product to edit.");
+    return;
+  }
+  if (checked.length > 1) {
+    alert("Only select ONE product to edit.");
+    return;
+  }
+
+  const productId = checked[0].value;
+  window.location.href = "/products/edit/" + productId;
+});
+
+// DELETE SELECTED
+document.getElementById('deleteSelectedBtn').addEventListener('click', () => {
+  const checked = document.querySelectorAll('.product-checkbox:checked');
+
+  if (checked.length === 0) {
+    alert("Select at least 1 product to delete.");
+    return;
+  }
+
+  if (!confirm("Are you sure you want to delete the selected products?")) return;
+
+  let index = 0;
+
+  function processDelete() {
+    if (index >= checked.length) {
+      window.location.reload();
+      return;
+    }
+
+    const productId = checked[index].value;
+
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = "/products/delete/" + productId;
+
+    document.body.appendChild(form);
+    form.submit();
+
+    index++;
+  }
+
+  processDelete();
+});
+
+</script>

@@ -1,13 +1,13 @@
 // routes/orders.js
 // =======================================================================
-// FINAL FIXED VERSION — ROOT-LEVEL STATUS ("to_pay", "to_ship", etc.)
+// FINAL FIXED VERSION — Root-level status ("to_pay", "to_ship", etc.)
 // =======================================================================
 
 const express = require("express");
 const router = express.Router();
 const { ObjectId } = require("mongodb");
 const { v4: uuidv4 } = require("uuid");
-const requireLogin = require("../middlewares/requireLogin");
+const { isAuthenticated } = require("../middlewares/auth");
 
 // Helper: Find product by productId or _id
 async function findProduct(db, productId) {
@@ -21,9 +21,9 @@ async function findProduct(db, productId) {
 }
 
 // =======================================================================
-// GET /orders/checkout — Checkout Page
+// GET /orders/checkout — Checkout Page (PROTECTED)
 // =======================================================================
-router.get("/checkout", requireLogin, async (req, res) => {
+router.get("/checkout", isAuthenticated, async (req, res) => {
   try {
     const db = req.app.locals.client.db(req.app.locals.dbName);
     const productId = (req.query.productId || "").trim();
@@ -98,9 +98,9 @@ router.get("/checkout", requireLogin, async (req, res) => {
 });
 
 // =======================================================================
-// POST /orders/checkout — Place Order
+// POST /orders/checkout — Place Order (PROTECTED)
 // =======================================================================
-router.post("/checkout", requireLogin, async (req, res) => {
+router.post("/checkout", isAuthenticated, async (req, res) => {
   try {
     const db = req.app.locals.client.db(req.app.locals.dbName);
     const productsCol = db.collection("products");
@@ -172,7 +172,6 @@ router.post("/checkout", requireLogin, async (req, res) => {
     const subtotal = product.price * qty;
     const totalAmount = subtotal;
 
-    // FINAL FIX: Root-level "status"
     const orderDoc = {
       orderId: uuidv4(),
       userId: user.userId,
@@ -189,7 +188,7 @@ router.post("/checkout", requireLogin, async (req, res) => {
         },
       ],
       totalAmount,
-      status: "to_pay", // <── FIXED
+      status: "to_pay",
       shipping: {
         fullName,
         addressLine1,
@@ -247,9 +246,9 @@ router.post("/checkout", requireLogin, async (req, res) => {
 });
 
 // =======================================================================
-// GET /orders — User Order List
+// GET /orders — User Order List (PROTECTED)
 // =======================================================================
-router.get("/", requireLogin, async (req, res) => {
+router.get("/", isAuthenticated, async (req, res) => {
   try {
     const db = req.app.locals.client.db(req.app.locals.dbName);
     const ordersCol = db.collection("orders");
@@ -276,9 +275,9 @@ router.get("/", requireLogin, async (req, res) => {
 });
 
 // =======================================================================
-// GET /orders/:orderId — Order Details
+// GET /orders/:orderId — Order Details (PROTECTED)
 // =======================================================================
-router.get("/:orderId", requireLogin, async (req, res) => {
+router.get("/:orderId", isAuthenticated, async (req, res) => {
   try {
     const db = req.app.locals.client.db(req.app.locals.dbName);
     const ordersCol = db.collection("orders");

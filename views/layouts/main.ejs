@@ -6,7 +6,107 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
+<style>
+/* =================================================
+   PRINT MODE (Lesson 24 – Print-Friendly PDF Mode)
+   ================================================= */
+@media print {
+
+  /* Remove navbar, footer, buttons, links */
+  header,
+  footer,
+  nav,
+  .navbar,
+  .navbar-menu,
+  .newsletter,
+  .footer,
+  .footer-container,
+  .footer-bottom,
+  .hamburger,
+  .no-print,
+  button,
+  .btn-primary,
+  .btn,
+  a[href],
+  form,
+  .filter-field,
+  .report-actions {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* Full clean sheet layout */
+  body {
+    background: white !important;
+    margin: 20px;
+    padding: 0;
+    font-size: 14px !important;
+  }
+
+  /* Main content only */
+  .page-content {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Tables print cleaner */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin-top: 20px !important;
+  }
+
+  table th,
+  table td {
+    border: 1px solid #444 !important;
+    padding: 6px !important;
+    font-size: 13px !important;
+  }
+
+  /* Chart prints smaller */
+  #salesChart {
+    max-height: 300px !important;
+    margin-bottom: 20px !important;
+  }
+}
+@media print {
+
+  /* REMOVE ANY PAGE BREAKS */
+  * {
+    page-break-after: avoid !important;
+    page-break-before: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* FIX: Remove top spacing */
+  body, html {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  main.page-content {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* REMOVE the top padding originally added */
+  .report-page,
+  .sales-report-container {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+  }
+
+  /* FIX LAST PART: avoid blank last page */
+  #salesChart {
+    page-break-after: avoid !important;
+  }
+
+}
+
+</style>
 <body>
 
   <!-- HEADER / NAVBAR -->
@@ -25,27 +125,30 @@
       <li><a href="/about">About</a></li>
 
       <% if (user && user.role === 'admin') { %>
-        <li><a href="/users/list">Manage Users</a></li>
-      <% } %>
+  <!-- ADMIN ONLY -->
+  <li><a href="/products/admin/products">Products</a></li>
+  <li><a href="/users/list">Manage Users</a></li>
+  <li><a href="/admin/orders">Orders</a></li>
+
+  <!-- NEW: Lesson 23 – Sales Reports -->
+  <li><a href="/admin/reports/sales">Sales Reports</a></li>
+<% } %>
+
 
       <li><a href="/contact">Contact</a></li>
 
-      <!-- CART -->
+      <!-- CART — CUSTOMERS & GUEST ONLY -->
       <% if (!user || user.role === 'customer') { %>
         <li class="nav-cart">
           <a href="/cart" class="cart-link">Cart <span id="navCartCount">(<%= cartCount %>)</span></a>
         </li>
-        <% } %>
+      <% } %>
 
       <% if (user) { %>
         <li><a href="/users/dashboard">Dashboard</a></li>
 
         <% if (user.role === 'customer') { %>
           <li><a href="/orders">My Orders</a></li>
-        <% } %>
-
-        <% if (user.role === 'admin') { %>
-          <li><a href="/admin/orders">Orders</a></li>
         <% } %>
 
         <li><a href="/users/logout">Logout</a></li>

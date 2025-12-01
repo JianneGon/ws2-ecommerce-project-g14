@@ -14,17 +14,31 @@
           <th>Total Amount</th>
           <th>Status</th>
           <th>Placed On</th>
+          <th>Action</th> <!-- Changed from Update -->
         </tr>
       </thead>
+
       <tbody>
         <% orders.forEach(order => { %>
           <tr>
             <td><%= order.orderId %></td>
-            <td><%= order.email %></td>
+            <td><%= order.userEmail %></td>
             <td><%= order.totalQty %></td>
             <td>₱<%= order.totalAmount.toFixed(2) %></td>
-            <td><%= order.status.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()) %></td>
+
+            <!-- STATUS DISPLAY ONLY -->
+<td class="status-text">
+  <%= order.status.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) %>
+</td>
+
             <td><%= order.createdAt.toLocaleString() %></td>
+
+            <!-- VIEW ORDER BUTTON -->
+            <td>
+              <a href="/admin/orders/<%= order.orderId %>" class="btn-primary btn-small">
+                View
+              </a>
+            </td>
           </tr>
         <% }) %>
       </tbody>

@@ -4,12 +4,6 @@
   <h1 class="products-page-title">Unbox Your Next Pair</h1>
 <% } %>
 
-<% if (user && user.role === 'admin') { %>
-  <div class="button-container">
-    <a href="/products/add" class="btn btn-primary">Add New Shoe</a>
-  </div>
-<% } %>
-
 <div class="product-grid">
   <% products.forEach(product => { %>
 

@@ -2,28 +2,92 @@
 
 <div class="form-container">
 
-  <%
+  <% 
     const sizeOptions = ['US 6', 'US 6.5', 'US 7', 'US 7.5', 'US 8', 'US 8.5', 'US 9'];
 
+    // Build existing size stock map
     const sizeMap = {};
     if (product.sizes && product.sizes.length) {
       product.sizes.forEach(s => sizeMap[s.label] = s.stock);
     }
+    
+    // Safe fallback for formData
+    const fd = typeof formData !== "undefined" && formData ? formData : {};
   %>
 
-  <form action="/products/edit/<%= product.productId %>" method="POST" enctype="multipart/form-data" class="product-form">
+  <!-- ============================
+       VALIDATION ERROR BOX
+       ============================ -->
+  <% if (typeof errors !== "undefined" && errors.length > 0) { %>
+    <div style="
+      background: #ffe6e6;
+      border: 1px solid red;
+      padding: 10px;
+      margin-bottom: 15px;
+      color: red;
+      border-radius: 4px;
+    ">
+      <p><strong>Please fix the following errors:</strong></p>
+      <ul style="margin-left:18px;">
+        <% errors.forEach(err => { %>
+          <li><%= err %></li>
+        <% }) %>
+      </ul>
+    </div>
+  <% } %>
 
+  <form 
+    action="/products/edit/<%= product.productId %>" 
+    method="POST" 
+    enctype="multipart/form-data" 
+    class="product-form"
+  >
+
+    <!-- PRODUCT NAME -->
     <label for="name">Product Name:</label>
-    <input type="text" id="name" name="name" value="<%= product.name %>" required>
+    <input 
+      type="text" 
+      id="name" 
+      name="name"
+      value="<%= fd.name || product.name %>"
+    >
 
+    <!-- BRAND -->
     <label for="brand">Brand:</label>
-    <input type="text" id="brand" name="brand" value="<%= product.brand %>" required>
+    <input 
+      type="text" 
+      id="brand" 
+      name="brand"
+      value="<%= product.brand %>"
+    >
 
+    <!-- CATEGORY -->
+    <label for="category">Category:</label>
+    <input
+      type="text"
+      id="category"
+      name="category"
+      value="<%= fd.category || product.category %>"
+    >
+
+    <!-- PRICE -->
     <label for="price">Price (₱):</label>
-    <input type="number" id="price" name="price" value="<%= product.price %>" step="0.01" min="0" required>
+    <input 
+      type="number" 
+      id="price" 
+      name="price" 
+      step="0.01" 
+      min="0"
+      value="<%= fd.price || product.price %>"
+    >
 
+    <!-- DESCRIPTION -->
     <label for="description">Description:</label>
-    <textarea id="description" name="description" rows="4"><%= product.description %></textarea>
+    <textarea 
+      id="description" 
+      name="description" 
+      rows="4"
+    ><%= fd.description || product.description %></textarea>
 
     <!-- SIZE TABLE -->
     <h3 style="margin-top:20px;">Sizes & Stock</h3>
@@ -39,14 +103,22 @@
         </tr>
       </thead>
       <tbody>
-        <% sizeOptions.forEach((label, idx) => {
-          const sizeStock = typeof sizeMap[label] !== "undefined" ? sizeMap[label] : 0;
+        <% sizeOptions.forEach((label, idx) => { 
+             const sizeStock = sizeMap[label] || 0;
         %>
           <tr>
             <td style="padding:8px; border-bottom:1px solid #f1f1f1;"><%= label %></td>
             <td style="padding:8px; border-bottom:1px solid #f1f1f1;">
               <input type="hidden" name="sizes[<%= idx %>][label]" value="<%= label %>">
-              <input type="number" class="size-stock-input" name="sizes[<%= idx %>][stock]" value="<%= sizeStock %>" min="0" style="width:100px;">
+
+              <input 
+                type="number" 
+                class="size-stock-input" 
+                name="sizes[<%= idx %>][stock]" 
+                min="0"
+                style="width:100px;"
+                value="<%= sizeStock %>"
+              >
             </td>
           </tr>
         <% }) %>
@@ -56,21 +128,35 @@
     <!-- LIVE TOTAL STOCK -->
     <p id="liveTotalStock" style="font-weight:600; margin-bottom:20px;">Total Stock: 0</p>
 
+    <!-- SHIPPING INFO -->
     <label for="shippingInfo">Shipping Info:</label>
-    <textarea id="shippingInfo" name="shippingInfo" rows="3"><%= product.shippingInfo || '' %></textarea>
+    <textarea 
+      id="shippingInfo" 
+      name="shippingInfo" 
+      rows="3"
+    ><%= product.shippingInfo || "" %></textarea>
 
+    <!-- RETURNS INFO -->
     <label for="returnsInfo">Returns Policy:</label>
-    <textarea id="returnsInfo" name="returnsInfo" rows="3"><%= product.returnsInfo || '' %></textarea>
+    <textarea 
+      id="returnsInfo" 
+      name="returnsInfo" 
+      rows="3"
+    ><%= product.returnsInfo || "" %></textarea>
 
+    <!-- IMAGE -->
     <label>Current Image:</label>
-    <img src="<%= product.imageUrl %>" style="max-width:150px; border-radius:6px; margin-bottom: 10px; display:block;">
+    <img 
+      src="<%= product.imageUrl %>" 
+      style="max-width:150px; border-radius:6px; margin-bottom: 10px; display:block;"
+    >
 
     <label for="image">Change Image:</label>
     <input type="file" id="image" name="image" accept="image/*">
 
     <div class="form-buttons">
       <button type="submit" class="btn-save">Update Product</button>
-      <a href="/products" class="btn-cancel">Cancel</a>
+      <a href="/admin/products" class="btn-cancel">Cancel</a>
     </div>
 
   </form>

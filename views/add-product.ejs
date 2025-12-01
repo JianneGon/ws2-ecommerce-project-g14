@@ -2,24 +2,80 @@
 
 <div class="form-container">
 
-  <% 
-    const sizeOptions = ['US 6', 'US 6.5', 'US 7', 'US 7.5', 'US 8', 'US 8.5', 'US 9'];
-  %>
+<%
+  // Safe fallback for formData
+  const fd = typeof formData !== "undefined" && formData ? formData : {};
+  const sizeOptions = ['US 6', 'US 6.5', 'US 7', 'US 7.5', 'US 8', 'US 8.5', 'US 9'];
+%>
+
+  <!-- ============================
+       VALIDATION ERROR MESSAGES
+       ============================ -->
+  <% if (typeof errors !== "undefined" && errors.length > 0) { %>
+    <div style="
+      background: #ffe6e6;
+      border: 1px solid red;
+      padding: 10px;
+      margin-bottom: 15px;
+      color: red;
+      border-radius: 4px;
+    ">
+      <p><strong>Please fix the following errors:</strong></p>
+      <ul style="margin-left:18px;">
+        <% errors.forEach(err => { %>
+          <li><%= err %></li>
+        <% }) %>
+      </ul>
+    </div>
+  <% } %>
 
   <form action="/products/add" method="POST" enctype="multipart/form-data" class="product-form">
 
     <!-- BASIC INFO -->
     <label for="name">Product Name:</label>
-    <input type="text" id="name" name="name" placeholder="Enter product name" required>
+    <input 
+      type="text" 
+      id="name" 
+      name="name" 
+      placeholder="Enter product name"
+      value="<%= fd.name || '' %>"
+    >
 
     <label for="brand">Brand:</label>
-    <input type="text" id="brand" name="brand" placeholder="Enter brand" required>
+    <input 
+      type="text" 
+      id="brand" 
+      name="brand" 
+      placeholder="Enter brand"
+      value="<%= fd.brand || '' %>"
+    >
+
+    <label for="category">Category:</label>
+    <input
+      type="text"
+      id="category"
+      name="category"
+      placeholder="Enter category"
+      value="<%= fd.category || '' %>"
+    >
 
     <label for="price">Price (₱):</label>
-    <input type="number" id="price" name="price" placeholder="Enter price" step="0.01" min="0" required>
+    <input 
+      type="number" 
+      id="price" 
+      name="price" 
+      placeholder="Enter price"
+      step="0.01"
+      min="0"
+      value="<%= fd.price || '' %>"
+    >
 
     <label for="description">Description:</label>
-    <textarea id="description" name="description" placeholder="Enter product description"></textarea>
+    <textarea 
+      id="description" 
+      name="description" 
+      placeholder="Enter product description"
+    ><%= fd.description || '' %></textarea>
 
     <!-- SIZE TABLE -->
     <h3 style="margin-top:20px;">Sizes & Stock</h3>
@@ -40,7 +96,14 @@
             <td style="padding:8px; border-bottom:1px solid #f1f1f1;"><%= label %></td>
             <td style="padding:8px; border-bottom:1px solid #f1f1f1;">
               <input type="hidden" name="sizes[<%= idx %>][label]" value="<%= label %>">
-              <input type="number" class="size-stock-input" name="sizes[<%= idx %>][stock]" value="0" min="0" style="width:100px;">
+              <input 
+                type="number" 
+                class="size-stock-input" 
+                name="sizes[<%= idx %>][stock]" 
+                min="0" 
+                style="width:100px;"
+                value="0"
+              >
             </td>
           </tr>
         <% }) %>
@@ -81,9 +144,7 @@ Returns accepted within 7 days.
 
     const calculateTotal = () => {
       let total = 0;
-      inputs.forEach(i => {
-        total += Number(i.value) || 0;
-      });
+      inputs.forEach(i => total += Number(i.value) || 0);
       totalEl.textContent = "Total Stock: " + total;
     };
 

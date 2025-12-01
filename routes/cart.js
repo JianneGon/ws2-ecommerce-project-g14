@@ -55,9 +55,9 @@ async function persistCartToUser(req) {
 }
 
 // =======================
-// GET /cart
+// GET /cart  (PROTECTED)
 // =======================
-router.get("/", (req, res) => {
+router.get("/", isAuthenticated, (req, res) => {
   initCart(req);
 
   res.render("cart", {
@@ -68,13 +68,12 @@ router.get("/", (req, res) => {
 });
 
 // =======================
-// POST /cart/add  (AJAX)
+// POST /cart/add  (PUBLIC - guests allowed)
 // =======================
 router.post("/add", async (req, res) => {
   try {
     initCart(req);
 
-    // Prevent undefined req.body coming from Turnstile/bots
     if (!req.body || Object.keys(req.body).length === 0) {
       return res.json({ success: false, message: "Empty request body" });
     }
@@ -140,7 +139,6 @@ router.post("/add", async (req, res) => {
     recalcCart(cart);
     await persistCartToUser(req);
 
-    // AJAX response
     if (req.xhr || (req.headers.accept && req.headers.accept.includes("application/json"))) {
       return res.json({
         success: true,
@@ -148,7 +146,6 @@ router.post("/add", async (req, res) => {
       });
     }
 
-    // Non-AJAX fallback
     const backUrl = req.get("referer") || `/products/${product.productId}`;
     return res.redirect(backUrl);
   } catch (err) {
@@ -166,9 +163,9 @@ router.post("/add", async (req, res) => {
 });
 
 // =======================
-// Update Cart
+// Update Cart (PROTECTED)
 // =======================
-router.post("/update", async (req, res) => {
+router.post("/update", isAuthenticated, async (req, res) => {
   try {
     initCart(req);
     const { productId, quantity, size } = req.body;
@@ -214,9 +211,9 @@ router.post("/update", async (req, res) => {
 });
 
 // =======================
-// Remove item
+// Remove item (PROTECTED)
 // =======================
-router.post("/remove", async (req, res) => {
+router.post("/remove", isAuthenticated, async (req, res) => {
   try {
     initCart(req);
     const { productId, size } = req.body;
@@ -241,9 +238,9 @@ router.post("/remove", async (req, res) => {
 });
 
 // =======================
-// Clear cart
+// Clear cart (PROTECTED)
 // =======================
-router.post("/clear", async (req, res) => {
+router.post("/clear", isAuthenticated, async (req, res) => {
   try {
     req.session.cart = {
       items: [],
@@ -266,7 +263,7 @@ router.post("/clear", async (req, res) => {
 });
 
 // =======================
-// Checkout Page
+// Checkout Page (PROTECTED)
 // =======================
 router.get("/checkout", isAuthenticated, (req, res) => {
   initCart(req);
@@ -288,7 +285,7 @@ router.get("/checkout", isAuthenticated, (req, res) => {
 });
 
 // =======================
-// Finalize Checkout
+// Finalize Checkout (PROTECTED)
 // =======================
 router.post("/checkout", isAuthenticated, async (req, res) => {
   try {
@@ -364,7 +361,6 @@ router.post("/checkout", isAuthenticated, async (req, res) => {
       );
     }
 
-    // Clear cart in session + user
     req.session.cart = {
       items: [],
       totalQty: 0,
