@@ -1,57 +1,216 @@
 <main class="page-content">
 
-  <h1 class="page-title">Welcome, <%= user.firstName %> <%= user.lastName %>!</h1>
+  <% 
+    const fullName =
+      ((user.firstName || '') + (user.lastName ? ' ' + user.lastName : '')).trim() 
+      || (user.email || 'User');
 
-  <!-- USER INFO -->
-  <div class="dashboard-info">
-    <p><strong>User ID:</strong> <%= user.userId %></p>
-    <p><strong>Email:</strong> <%= user.email %></p>
-    <p><strong>Email Verified:</strong> <%= user.isEmailVerified ? "Yes" : "No" %></p>
-    <p><strong>Role:</strong> <%= user.role %></p>
-    <p><strong>Status:</strong> Active</p>
-  </div>
+    const initial =
+      (fullName && fullName[0].toUpperCase()) ||
+      (user.email && user.email[0].toUpperCase()) ||
+      'U';
+  %>
 
-  <% if (user.role !== 'admin') { %>
+  <!-- =======================
+       PROFILE HEADER STRIP
+  ======================== -->
+  <section class="dashboard-header">
+    <div class="dh-avatar">
+      <div class="dh-avatar-circle">
+        <span><%= initial %></span>
+      </div>
+    </div>
 
-    <h2 class="section-title">Order Summary</h2>
+    <div class="dh-main">
+      <div class="dh-name"><%= fullName %></div>
+      <div class="dh-email"><%= user.email %></div>
 
-   <div class="order-summary-wrapper">
-  <table class="order-summary-table">
-    <tr>
-      <th>Status</th>
-      <th>Count</th>
-    </tr>
+      <div class="dh-tags">
+        <span class="tag-pill blue">
+          <%= user.role === 'admin' ? 'Administrator' : 'Customer' %>
+        </span>
 
-    <tr><td>Total Orders</td><td><%= totalOrders %></td></tr>
-    <tr><td>To Pay</td><td><%= toPayOrders %></td></tr>
-    <tr><td>To Ship</td><td><%= toShipOrders %></td></tr>
-    <tr><td>To Receive</td><td><%= toReceiveOrders %></td></tr>
-    <tr><td>Completed</td><td><%= completedOrders %></td></tr>
-    <tr><td>Return/Refund</td><td><%= refundOrders %></td></tr>
-    <tr><td>Cancelled</td><td><%= cancelledOrders %></td></tr>
-  </table>
-</div>
+        <span class="tag-pill <%= user.accountStatus === 'active' ? 'green' : 'red' %>">
+          <%= (user.accountStatus || 'active').charAt(0).toUpperCase() + (user.accountStatus || 'active').slice(1) %> account
+        </span>
 
-  <% } %>
+        <span class="tag-pill <%= user.isEmailVerified ? 'green' : 'red' %>">
+          <%= user.isEmailVerified ? 'Email verified' : 'Email not verified' %>
+        </span>
+      </div>
+    </div>
 
-  <!-- BUTTONS -->
-  <div class="dashboard-actions">
+    <div class="dh-actions">
+      <a href="/users/profile" class="profile-action">View Profile</a>
+      <a href="/users/edit/<%= user.userId %>" class="profile-action">Edit Profile</a>
+    </div>
+  </section>
 
-    <a href="/users/profile" class="btn-dashboard">View Profile</a>
+  <!-- =======================
+       QUICK ORDER SHORTCUTS
+  ======================== -->
+  <section class="dashboard-section">
+    <div class="order-status-row minimal-icons">
 
-    <a href="/users/edit/<%= user.userId %>" class="btn-edit">Edit Profile</a>
+      <a href="/orders?status=to_pay" class="status-item">
+        <i class="fa-regular fa-credit-card status-icon"></i>
+        <div class="status-label">To Pay</div>
+        <% if (toPayOrders > 0) { %><span class="badge"><%= toPayOrders %></span><% } %>
+      </a>
 
-    <% if (user.role === 'admin') { %>
+      <a href="/orders?status=to_ship" class="status-item">
+        <i class="fa-solid fa-box status-icon"></i>
+        <div class="status-label">To Ship</div>
+        <% if (toShipOrders > 0) { %><span class="badge"><%= toShipOrders %></span><% } %>
+      </a>
 
-      <a href="/users/admin" class="btn-dashboard">Admin Panel</a>
+      <a href="/orders?status=to_receive" class="status-item">
+        <i class="fa-solid fa-truck status-icon"></i>
+        <div class="status-label">To Receive</div>
+        <% if (toReceiveOrders > 0) { %><span class="badge"><%= toReceiveOrders %></span><% } %>
+      </a>
+
+      <a href="/orders?status=completed" class="status-item">
+        <i class="fa-regular fa-star status-icon"></i>
+        <div class="status-label">To Rate</div>
+        <% if (completedOrders > 0) { %><span class="badge"><%= completedOrders %></span><% } %>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- ============================
+       RECENT ORDERS PREVIEW
+  ============================ -->
+  <section class="recent-orders-section">
+    <h2 class="recent-orders-title">Recent Orders</h2>
+
+    <% if (recentOrders.length === 0) { %>
+
+      <p style="text-align:center; color:#666;">No recent orders yet.</p>
 
     <% } else { %>
 
-      <a href="/orders" class="btn-dashboard">My Orders</a>
+    <div class="recent-orders-list">
+      <% recentOrders.forEach(order => { %>
+        <div class="recent-order-card">
+
+          <div class="ro-left">
+            <div class="ro-order-id">Order: <%= order.orderId %></div>
+
+            <div class="ro-meta">
+              ₱<%= Number(order.totalAmount).toLocaleString() %> •
+              <%= order.totalQty %> item(s) •
+              <%= new Date(order.createdAt).toLocaleDateString() %>
+            </div>
+
+            <span class="ro-status <%= order.status %>">
+              <%= order.status.replace(/_/g, " ") %>
+            </span>
+          </div>
+
+          <a class="ro-view" href="/orders/<%= order.orderId %>">View →</a>
+        </div>
+      <% }) %>
+    </div>
 
     <% } %>
+  </section>
 
+ <!-- ===========================
+       ORDER SUMMARY (DONUT CHART)
+  ============================ -->
+    <h2 class="order-summary-title">Order Summary</h2>
+    <div class="order-summary-chart-wrapper">
+      <canvas id="orderSummaryChart"></canvas>
+
+      <!-- Total number below the chart -->
+      <div id="orderSummaryTotal" class="chart-total-text"></div>
+    </div>
+
+      <!-- Total number in the center -->
+      <div id="orderSummaryCenterText" class="center-text"></div>
+    </div>
+
+    <div class="dashboard-actions bottom-actions">
+      <a href="/orders" class="view-link">View All Orders →</a>
+    </div>
   </div>
 
 </main>
 
+<!-- CHART JS CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  const ctx = document.getElementById("orderSummaryChart").getContext("2d");
+
+  function getStatusColor(statusClass) {
+    const el = document.createElement("span");
+    el.className = "status-badge " + statusClass;
+    el.style.position = "absolute";
+    el.style.visibility = "hidden";
+    el.style.pointerEvents = "none";
+    document.body.appendChild(el);
+
+    const color = window.getComputedStyle(el).backgroundColor;
+    document.body.removeChild(el);
+    return color;
+  }
+
+  const statusColors = [
+    getStatusColor("to_pay"),
+    getStatusColor("to_ship"),
+    getStatusColor("to_receive"),
+    getStatusColor("completed"),
+    getStatusColor("refund"),
+    getStatusColor("cancelled")
+  ];
+
+  const chartData = [
+    <%= toPayOrders %>,
+    <%= toShipOrders %>,
+    <%= toReceiveOrders %>,
+    <%= completedOrders %>,
+    <%= refundOrders %>,
+    <%= cancelledOrders %>
+  ];
+
+  const totalOrders = <%= totalOrders %>;
+  document.getElementById("orderSummaryTotal").innerHTML = "Total: " + totalOrders;
+
+  new Chart(ctx, {
+    type: "doughnut",
+    data: {
+      labels: [
+        "To Pay",
+        "To Ship",
+        "To Receive",
+        "Completed",
+        "Refund",
+        "Cancelled"
+      ],
+      datasets: [{
+        data: chartData,
+        backgroundColor: statusColors,
+        borderColor: "#fff",
+        borderWidth: 3,
+        hoverOffset: 10
+      }]
+    },
+    options: {
+      cutout: "65%",
+      plugins: {
+        legend: {
+          position: "right",
+          labels: {
+            usePointStyle: true,
+            padding: 20,
+            font: { size: 14 },
+            color: "#333"
+          }
+        }
+      }
+    }
+  });
+</script>

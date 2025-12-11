@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<title>Payment Successful</title>
+
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    background: #f4f6fb;
+    font-family: "Inter", sans-serif;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    min-height: 100vh;
+    text-align: center;
+    color: #111;
+  }
+
+  .check-icon {
+    width: 85px;
+    height: 85px;
+    border-radius: 50%;
+    background: #27ae60;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 28px;
+  }
+
+  .check-icon svg {
+    width: 45px;
+    height: 45px;
+    fill: #fff;
+  }
+
+  .title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+    color: #666;
+    max-width: 420px;
+    line-height: 1.5;
+    margin-bottom: 32px;
+  }
+
+  .btn-main {
+    display: inline-block;
+    padding: 14px 28px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+    background: #0051ff;
+    border-radius: 10px;
+    text-decoration: none;
+    transition: 0.2s ease;
+  }
+
+  .btn-main:hover {
+    background: #003fcc;
+  }
+</style>
+</head>
+
+<body>
+
+  <div class="check-icon">
+    <svg viewBox="0 0 24 24">
+      <path d="M20.285 6.709a1 1 0 0 0-1.414-1.414l-9.192 9.192-4.242-4.242a1 1 0 0 0-1.414 1.414l5 5a1 1 0 0 0 1.414 0l10-10z"/>
+    </svg>
+  </div>
+
+  <div class="title">Your payment has been received</div>
+
+  <div class="subtitle">
+    Thank you for your payment. Your order has been successfully processed!
+    Please check your email for confirmation.
+  </div>
+
+  <a href="/orders" class="btn-main">Go to My Orders</a>
+
+</body>
+</html>

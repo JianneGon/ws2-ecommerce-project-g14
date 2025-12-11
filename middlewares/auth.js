@@ -14,7 +14,6 @@ function isAuthenticated(req, res, next) {
 
 function isAdmin(req, res, next) {
   if (!req.session.user) {
-    // guest trying to access admin
     return res.status(403).render("error", {
       title: "Access Denied",
       message: "You must be logged in to access admin pages.",
@@ -24,7 +23,6 @@ function isAdmin(req, res, next) {
   }
 
   if (req.session.user.role !== "admin") {
-    // customer trying to access admin
     return res.status(403).render("error", {
       title: "Access Denied",
       message: "Admins only can access this page.",
@@ -36,4 +34,16 @@ function isAdmin(req, res, next) {
   next();
 }
 
-module.exports = { isAuthenticated, isAdmin };
+// NEW: Prevent admin from accessing customer-only routes
+function blockAdmin(req, res, next) {
+  if (req.session.user && req.session.user.role === "admin") {
+    return res.redirect("/users/dashboard");   // or "/admin/orders"
+  }
+  next();
+}
+
+module.exports = { 
+  isAuthenticated, 
+  isAdmin, 
+  blockAdmin 
+};

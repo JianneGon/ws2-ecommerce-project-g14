@@ -1,8 +1,15 @@
+<!-- ================================
+     Admin: Registered Users List
+================================ -->
+
 <h1 class="users-page-title">Registered Users</h1>
 
-<!-- Centered search + role filter (same width as table) -->
+<!-- ================================
+     FILTER BAR (Search + Role Filter)
+================================ -->
 <div class="users-filter">
   <form method="get" action="/users/list">
+    <!-- Search bar -->
     <input
       type="text"
       name="q"
@@ -11,6 +18,7 @@
       aria-label="Search users"
     />
 
+    <!-- Role Filter -->
     <select name="role" aria-label="Filter by role">
       <option value="all" <%= (!role || role === 'all') ? 'selected' : '' %>>All</option>
       <option value="admin" <%= role === 'admin' ? 'selected' : '' %>>Admin</option>
@@ -19,8 +27,9 @@
 
     <div class="filter-actions">
       <button type="submit" class="btn-primary">Search</button>
+
       <% if (q || (role && role !== 'all')) { %>
-        <a href="/users/list" class="btn-cancel" style="text-decoration:none;">Clear</a>
+        <a href="/users/list" class="btn-cancel">Clear</a>
       <% } %>
     </div>
   </form>
@@ -30,6 +39,9 @@
   <% } %>
 </div>
 
+<!-- ================================
+     USERS TABLE
+================================ -->
 <% if (users && users.length > 0) { %>
   <div class="table-container">
     <table>
@@ -41,37 +53,71 @@
           <th>Role</th>
           <th>Status</th>
           <th>Verified</th>
-          <th style="width: 220px;">Actions</th>
+          <th style="width: 230px;">Actions</th>
         </tr>
       </thead>
+
       <tbody>
         <% users.forEach(u => { 
-             const idVal = u.userId || (u._id && u._id.toString());
+            const idVal = u.userId || (u._id && u._id.toString());
+            const isSelf = (u.userId === admin.userId);
+            const isAdminUser = (u.role === "admin");
+            const status = u.accountStatus || "active";
         %>
           <tr>
             <td><%= u.createdAt ? new Date(u.createdAt).toLocaleString() : "-" %></td>
+
             <td><%= u.firstName || "" %> <%= u.lastName || "" %></td>
+
             <td><%= u.email %></td>
-            <td><%= u.role || "customer" %></td>
-            <td><%= u.accountStatus || "active" %></td>
+
+            <td><%= u.role %></td>
+
+            <!-- STATUS BADGE -->
+            <td>
+              <span class="status-badge <%= status %>">
+                <%= status === "active" ? "Active" : "Banned" %>
+              </span>
+            </td>
+
+            <!-- VERIFIED -->
             <td><%= u.isEmailVerified ? "Yes" : "No" %></td>
+
+            <!-- ===== ACTIONS (BAN/ACTIVATE) ===== -->
             <td>
               <div class="table-actions">
-                <a class="btn-edit" href="/users/edit/<%= idVal %>">Edit</a>
-                <form action="/users/delete/<%= idVal %>" method="POST" onsubmit="return confirm('Delete this user?');" style="display:inline;">
-                  <button class="btn-delete" type="submit">Delete</button>
-                </form>
+
+                <% if (!isSelf && !isAdminUser) { %>
+
+                  <% if (status === "active") { %>
+                    <!-- BAN BUTTON -->
+                    <form action="/users/ban/<%= idVal %>" method="POST"
+                      onsubmit="return confirm('Ban this user?');">
+                      <button type="submit" class="btn-ban">Ban</button>
+                    </form>
+
+                  <% } else { %>
+                    <!-- ACTIVATE BUTTON -->
+                    <form action="/users/activate/<%= idVal %>" method="POST"
+                      onsubmit="return confirm('Reactivate this user?');">
+                      <button type="submit" class="btn-activate">Activate</button>
+                    </form>
+                  <% } %>
+
+                <% } else { %>
+                  <!-- If admin/self: no actions -->
+                  <span style="color:#888; font-size:0.85rem;">No actions</span>
+                <% } %>
+
               </div>
             </td>
+
           </tr>
         <% }) %>
       </tbody>
     </table>
   </div>
+
 <% } else { %>
   <p class="no-users-text">No users registered yet.</p>
 <% } %>
-
-<div class="register-user-link">
-  <a class="btn btn-primary" href="/users/register">Register another user</a>
-</div>

@@ -68,5 +68,34 @@ router.get("/returns", (req, res) => {
     user: req.session.user,
   });
 });
+const { Resend } = require("resend");
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+// POST: Contact form submission
+router.post("/contact", async (req, res) => {
+  try {
+    const { name, email, phone, message } = req.body;
+
+    const adminEmail = process.env.CONTACT_TO_EMAIL;
+
+    await resend.emails.send({
+      from: process.env.RESEND_FROM_EMAIL,
+      to: adminEmail,
+      subject: `New Contact Message from ${name}`,
+      html: `
+        <h2>Contact Form Submission</h2>
+        <p><strong>Name:</strong> ${name}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Phone:</strong> ${phone || 'N/A'}</p>
+        <p><strong>Message:</strong> ${message}</p>
+      `,
+    });
+
+    res.redirect("/contact?success=1"); // shows success message
+  } catch (err) {
+    console.error("❌ Contact Send Error:", err);
+    res.redirect("/contact?error=1");
+  }
+});
 
 module.exports = router;

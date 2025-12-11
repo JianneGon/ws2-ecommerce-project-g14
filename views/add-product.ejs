@@ -3,14 +3,20 @@
 <div class="form-container">
 
 <%
-  // Safe fallback for formData
   const fd = typeof formData !== "undefined" && formData ? formData : {};
   const sizeOptions = ['US 6', 'US 6.5', 'US 7', 'US 7.5', 'US 8', 'US 8.5', 'US 9'];
+
+  const categories = [
+    "Running",
+    "Training",
+    "Basketball",
+    "Lifestyle",
+    "Casual",
+    "Hiking",
+    "Trail Running"
+  ];
 %>
 
-  <!-- ============================
-       VALIDATION ERROR MESSAGES
-       ============================ -->
   <% if (typeof errors !== "undefined" && errors.length > 0) { %>
     <div style="
       background: #ffe6e6;
@@ -50,14 +56,20 @@
       value="<%= fd.brand || '' %>"
     >
 
+    <!-- CATEGORY DROPDOWN -->
     <label for="category">Category:</label>
-    <input
-      type="text"
-      id="category"
-      name="category"
-      placeholder="Enter category"
-      value="<%= fd.category || '' %>"
-    >
+    <select id="category" name="category">
+      <option value="">-- Select Category --</option>
+
+      <% categories.forEach(cat => { %>
+        <option 
+          value="<%= cat %>" 
+          <%= fd.category === cat ? "selected" : "" %>
+        >
+          <%= cat %>
+        </option>
+      <% }) %>
+    </select>
 
     <label for="price">Price (₱):</label>
     <input 
@@ -96,6 +108,7 @@
             <td style="padding:8px; border-bottom:1px solid #f1f1f1;"><%= label %></td>
             <td style="padding:8px; border-bottom:1px solid #f1f1f1;">
               <input type="hidden" name="sizes[<%= idx %>][label]" value="<%= label %>">
+
               <input 
                 type="number" 
                 class="size-stock-input" 
@@ -113,25 +126,15 @@
     <!-- LIVE TOTAL STOCK -->
     <p id="liveTotalStock" style="font-weight:600; margin-bottom:20px;">Total Stock: 0</p>
 
-    <!-- SHIPPING INFO -->
-    <label for="shippingInfo">Shipping Info:</label>
-    <textarea id="shippingInfo" name="shippingInfo" rows="3" placeholder="Describe shipping time...">
-Shipping usually takes 3–7 business days.
-    </textarea>
-
-    <!-- RETURNS INFO -->
-    <label for="returnsInfo">Returns Policy:</label>
-    <textarea id="returnsInfo" name="returnsInfo" rows="3" placeholder="Describe return policy...">
-Returns accepted within 7 days.
-    </textarea>
-
     <!-- IMAGE -->
     <label for="image">Upload Image:</label>
     <input type="file" id="image" name="image" accept="image/*">
 
     <div class="form-buttons">
       <button type="submit" class="btn-save">Save Product</button>
-      <a href="/products" class="btn-cancel">Back to Products</a>
+
+      <!-- FIXED BACK BUTTON (Admin Route) -->
+      <a href="/products/admin/products" class="btn-cancel">Back to Products</a>
     </div>
 
   </form>
@@ -149,7 +152,6 @@ Returns accepted within 7 days.
     };
 
     inputs.forEach(i => i.addEventListener("input", calculateTotal));
-
     calculateTotal();
   });
 </script>

@@ -14,7 +14,7 @@
           <th>Total Amount</th>
           <th>Status</th>
           <th>Placed On</th>
-          <th>Action</th> <!-- Changed from Update -->
+          <th>Action</th>
         </tr>
       </thead>
 
@@ -24,20 +24,20 @@
             <td><%= order.orderId %></td>
             <td><%= order.userEmail %></td>
             <td><%= order.totalQty %></td>
-            <td>₱<%= order.totalAmount.toFixed(2) %></td>
 
-            <!-- STATUS DISPLAY ONLY -->
-<td class="status-text">
-  <%= order.status.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) %>
-</td>
+            <!-- FIXED PRICE FORMAT -->
+            <td>₱<%= Number(order.totalAmount).toLocaleString() %></td>
+
+            <!-- STATUS DISPLAY -->
+            <td class="status-text">
+              <%= order.status.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) %>
+            </td>
 
             <td><%= order.createdAt.toLocaleString() %></td>
 
             <!-- VIEW ORDER BUTTON -->
             <td>
-              <a href="/admin/orders/<%= order.orderId %>" class="btn-primary btn-small">
-                View
-              </a>
+              <a href="/admin/orders/<%= order.orderId %>" class="view-link">View</a>
             </td>
           </tr>
         <% }) %>

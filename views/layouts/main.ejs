@@ -7,167 +7,157 @@
   <link rel="stylesheet" href="/css/style.css">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
 </head>
+
 <style>
 /* =================================================
    PRINT MODE (Lesson 24 – Print-Friendly PDF Mode)
-   ================================================= */
+================================================= */
 @media print {
 
-  /* Remove navbar, footer, buttons, links */
+  /* Hide navigation + buttons */
   header,
   footer,
   nav,
   .navbar,
   .navbar-menu,
-  .newsletter,
   .footer,
   .footer-container,
   .footer-bottom,
   .hamburger,
   .no-print,
+  .report-actions,
   button,
-  .btn-primary,
-  .btn,
   a[href],
-  form,
-  .filter-field,
-  .report-actions {
+  form {
     display: none !important;
-    visibility: hidden !important;
   }
 
-  /* Full clean sheet layout */
-  body {
-    background: white !important;
-    margin: 20px;
-    padding: 0;
-    font-size: 14px !important;
-  }
-
-  /* Main content only */
-  .page-content {
-    width: 100%;
-    margin: 0;
-    padding: 0;
-  }
-
-  /* Tables print cleaner */
-  table {
-    width: 100% !important;
-    border-collapse: collapse !important;
-    margin-top: 20px !important;
-  }
-
-  table th,
-  table td {
-    border: 1px solid #444 !important;
-    padding: 6px !important;
-    font-size: 13px !important;
-  }
-
-  /* Chart prints smaller */
-  #salesChart {
-    max-height: 300px !important;
-    margin-bottom: 20px !important;
-  }
-}
-@media print {
-
-  /* REMOVE ANY PAGE BREAKS */
-  * {
-    page-break-after: avoid !important;
-    page-break-before: avoid !important;
-    page-break-inside: avoid !important;
-  }
-
-  /* FIX: Remove top spacing */
   body, html {
     margin: 0 !important;
     padding: 0 !important;
+    background: #fff !important;
   }
 
   main.page-content {
-    padding: 0 !important;
     margin: 0 !important;
+    padding: 0 !important;
   }
 
-  /* REMOVE the top padding originally added */
-  .report-page,
-  .sales-report-container {
-    padding-top: 0 !important;
-    margin-top: 0 !important;
+  .summary-centered-section,
+  .summary-card,
+  .summary-row {
+    page-break-inside: avoid !important;
   }
 
-  /* FIX LAST PART: avoid blank last page */
-  #salesChart {
-    page-break-after: avoid !important;
+  .summary-centered-section {
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
+  .summary-card {
+    height: auto !important;
+    min-height: auto !important;
+    padding: 15px 20px !important;
+  }
+
+  .daily-sales-section,
+  .daily-table-wrapper {
+    page-break-inside: avoid !important;
+  }
+
+  .sales-chart-title,
+  .chart-container {
+    page-break-inside: avoid !important;
+  }
+
+  /* PRINT FIX */
+  .summary-centered-section {
+    text-align: center !important;
+    margin: 20px auto !important;
+    width: 100% !important;
+    display: block !important;
+  }
+
+  .summary-card {
+    margin: 0 auto !important;
+    width: 60% !important;
+  }
+
+  .sales-chart-block {
+    page-break-inside: avoid !important;
+  }
 }
-
 </style>
+
+
 <body>
 
-  <!-- HEADER / NAVBAR -->
-  <header class="navbar">
-    <a href="/" class="navbar-brand">Commonwealth</a>
+<!-- CHECK IF PAGE WANTS CLEAN MODE -->
+<% const hideChrome = typeof hideLayoutChrome !== "undefined" && hideLayoutChrome === true; %>
 
-    <div class="hamburger" onclick="toggleMenu()">
-      <span></span>
-      <span></span>
-      <span></span>
-    </div>
+<!-- ================= NAVBAR ================= -->
+<% if (!hideChrome) { %>
+<header class="navbar">
+  <a href="/" class="navbar-brand">Commonwealth</a>
 
-    <ul class="navbar-menu" id="navLinks">
+  <div class="hamburger" onclick="toggleMenu()">
+    <span></span><span></span><span></span>
+  </div>
+
+  <ul class="navbar-menu" id="navLinks">
+
+    <% if (!user || user.role === 'customer') { %>
       <li><a href="/">Home</a></li>
       <li><a href="/products">Shoes</a></li>
-      <li><a href="/about">About</a></li>
 
-      <% if (user && user.role === 'admin') { %>
-  <!-- ADMIN ONLY -->
-  <li><a href="/products/admin/products">Products</a></li>
-  <li><a href="/users/list">Manage Users</a></li>
-  <li><a href="/admin/orders">Orders</a></li>
+      <li class="nav-cart">
+        <a href="/cart" class="cart-link">
+          Cart <span id="navCartCount">(<%= cartCount %>)</span>
+        </a>
+      </li>
+    <% } %>
 
-  <!-- NEW: Lesson 23 – Sales Reports -->
-  <li><a href="/admin/reports/sales">Sales Reports</a></li>
+    <% if (user && user.role === 'admin') { %>
+      <li><a href="/products/admin/products">Products</a></li>
+      <li><a href="/users/list">Manage Users</a></li>
+      <li><a href="/admin/orders">Orders</a></li>
+      <li><a href="/admin/reports/sales">Sales Reports</a></li>
+    <% } %>
+
+    <% if (user) { %>
+      <% if (user.role === 'admin') { %>
+        <li><a href="/admin/dashboard">Dashboard</a></li>
+      <% } else { %>
+        <li><a href="/users/dashboard">Dashboard</a></li>
+        <li><a href="/orders">My Orders</a></li>
+      <% } %>
+
+      <li><a href="/users/logout">Logout</a></li>
+
+    <% } else { %>
+      <li><a href="/users/register">Register</a></li>
+      <li><a href="/users/login">Login</a></li>
+    <% } %>
+
+  </ul>
+</header>
 <% } %>
 
+<!-- ================= PAGE CONTENT ================= -->
+<main class="page-content" style="<%= hideChrome ? 'padding:0; margin:0; min-height:100vh;' : '' %>">
+  <%- body %>
+</main>
 
-      <li><a href="/contact">Contact</a></li>
+<!-- ================= FOOTER ================= -->
+<% if (!hideChrome) { %>
+<footer class="footer">
 
-      <!-- CART — CUSTOMERS & GUEST ONLY -->
-      <% if (!user || user.role === 'customer') { %>
-        <li class="nav-cart">
-          <a href="/cart" class="cart-link">Cart <span id="navCartCount">(<%= cartCount %>)</span></a>
-        </li>
-      <% } %>
-
-      <% if (user) { %>
-        <li><a href="/users/dashboard">Dashboard</a></li>
-
-        <% if (user.role === 'customer') { %>
-          <li><a href="/orders">My Orders</a></li>
-        <% } %>
-
-        <li><a href="/users/logout">Logout</a></li>
-      <% } else { %>
-        <li><a href="/users/register">Register</a></li>
-        <li><a href="/users/login">Login</a></li>
-      <% } %>
-    </ul>
-  </header>
-
-  <!-- PAGE CONTENT -->
-  <main class="page-content">
-    <%- body %>
-  </main>
-
-  <!-- FOOTER -->
-  <footer class="footer">
+  <% if (!user || user.role === 'customer') { %>
     <div class="footer-container">
-      
+
       <div class="footer-column">
         <h4>Contact</h4>
         <ul>
@@ -195,22 +185,25 @@
           <input type="text" placeholder="Shoe Size" />
           <button type="submit">Subscribe</button>
         </form>
-
       </div>
+
     </div>
+  <% } %>
 
-    <div class="footer-bottom">
-      <p>© 2025 Commonwealth | All Rights Reserved</p>
-    </div>
-  </footer>
+  <div class="footer-bottom">
+    <p>© 2025 Commonwealth | All Rights Reserved</p>
+  </div>
 
-  <script src="https://kit.fontawesome.com/a2e0ad1c42.js" crossorigin="anonymous"></script>
+</footer>
+<% } %>
 
-  <script>
-    function toggleMenu() {
-      document.getElementById('navLinks').classList.toggle('show');
-    }
-  </script>
+<script src="https://kit.fontawesome.com/a2e0ad1c42.js" crossorigin="anonymous"></script>
+
+<script>
+  function toggleMenu() {
+    document.getElementById('navLinks').classList.toggle('show');
+  }
+</script>
 
 </body>
 </html>

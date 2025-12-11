@@ -5,19 +5,27 @@
   <% 
     const sizeOptions = ['US 6', 'US 6.5', 'US 7', 'US 7.5', 'US 8', 'US 8.5', 'US 9'];
 
-    // Build existing size stock map
     const sizeMap = {};
     if (product.sizes && product.sizes.length) {
       product.sizes.forEach(s => sizeMap[s.label] = s.stock);
     }
-    
-    // Safe fallback for formData
+
     const fd = typeof formData !== "undefined" && formData ? formData : {};
+
+    // Shoe categories for dropdown
+    const categories = [
+      "Running",
+      "Training",
+      "Basketball",
+      "Lifestyle",
+      "Casual",
+      "Hiking",
+      "Trail Running"
+    ];
+
+    const selectedCategory = fd.category || product.category;
   %>
 
-  <!-- ============================
-       VALIDATION ERROR BOX
-       ============================ -->
   <% if (typeof errors !== "undefined" && errors.length > 0) { %>
     <div style="
       background: #ffe6e6;
@@ -58,17 +66,23 @@
       type="text" 
       id="brand" 
       name="brand"
-      value="<%= product.brand %>"
+      value="<%= fd.brand || product.brand %>"
     >
 
-    <!-- CATEGORY -->
+    <!-- CATEGORY DROPDOWN (Updated UI) -->
     <label for="category">Category:</label>
-    <input
-      type="text"
-      id="category"
-      name="category"
-      value="<%= fd.category || product.category %>"
-    >
+    <select id="category" name="category" class="category-select">
+      <option value="">-- Select Category --</option>
+
+      <% categories.forEach(cat => { %>
+        <option 
+          value="<%= cat %>" 
+          <%= selectedCategory === cat ? "selected" : "" %>
+        >
+          <%= cat %>
+        </option>
+      <% }) %>
+    </select>
 
     <!-- PRICE -->
     <label for="price">Price (₱):</label>
@@ -89,7 +103,7 @@
       rows="4"
     ><%= fd.description || product.description %></textarea>
 
-    <!-- SIZE TABLE -->
+    <!-- SIZES + STOCK -->
     <h3 style="margin-top:20px;">Sizes & Stock</h3>
     <p style="font-size: 0.9rem; margin-bottom: 8px;">
       Set stock per size. <strong>0 stock = out of stock.</strong>
@@ -125,38 +139,22 @@
       </tbody>
     </table>
 
-    <!-- LIVE TOTAL STOCK -->
     <p id="liveTotalStock" style="font-weight:600; margin-bottom:20px;">Total Stock: 0</p>
 
-    <!-- SHIPPING INFO -->
-    <label for="shippingInfo">Shipping Info:</label>
-    <textarea 
-      id="shippingInfo" 
-      name="shippingInfo" 
-      rows="3"
-    ><%= product.shippingInfo || "" %></textarea>
-
-    <!-- RETURNS INFO -->
-    <label for="returnsInfo">Returns Policy:</label>
-    <textarea 
-      id="returnsInfo" 
-      name="returnsInfo" 
-      rows="3"
-    ><%= product.returnsInfo || "" %></textarea>
-
-    <!-- IMAGE -->
+    <!-- IMAGE PREVIEW -->
     <label>Current Image:</label>
     <img 
       src="<%= product.imageUrl %>" 
       style="max-width:150px; border-radius:6px; margin-bottom: 10px; display:block;"
     >
 
+    <!-- CHANGE IMAGE -->
     <label for="image">Change Image:</label>
     <input type="file" id="image" name="image" accept="image/*">
 
     <div class="form-buttons">
       <button type="submit" class="btn-save">Update Product</button>
-      <a href="/admin/products" class="btn-cancel">Cancel</a>
+      <a href="/products/admin/products" class="btn-cancel">Cancel</a>
     </div>
 
   </form>
@@ -164,6 +162,8 @@
 
 <script>
   document.addEventListener("DOMContentLoaded", () => {
+
+    // LIVE TOTAL STOCK CALCULATION
     const inputs = document.querySelectorAll(".size-stock-input");
     const totalEl = document.getElementById("liveTotalStock");
 

@@ -35,7 +35,7 @@
 
         <!-- PRICE COLUMN -->
         <div class="col-price">
-          ₱<%= item.price.toFixed(2) %>
+          ₱<%= Number(item.price).toLocaleString() %>
         </div>
 
         <!-- QUANTITY COLUMN -->
@@ -45,7 +45,7 @@
 
         <!-- TOTAL COLUMN -->
         <div class="col-total">
-          ₱<%= item.subtotal.toFixed(2) %>
+          ₱<%= Number(item.subtotal).toLocaleString() %>
         </div>
 
       </div>
@@ -95,7 +95,7 @@
 
       <div class="summary-row total-amount">
         <span>Total Amount:</span>
-        <strong>₱<%= order.totalAmount.toFixed(2) %></strong>
+        <strong>₱<%= Number(order.totalAmount).toLocaleString() %></strong>
       </div>
     </div>
 
@@ -130,8 +130,8 @@
 
 <div class="dashboard-actions">
   <% if (user && user.role === 'admin') { %>
-    <a href="/admin/orders" class="btn-back">Back to Orders</a>
+    <a href="/admin/orders" class="back-link">Back to Orders</a>
   <% } else { %>
-    <a href="/orders" class="btn-back">Back to Orders</a>
+    <a href="/orders" class="back-link">Back to Orders</a>
   <% } %>
 </div>

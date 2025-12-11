@@ -1,9 +1,10 @@
 <main class="page-content">
 
   <!-- CART PAGE MINI BANNER -->
-  <div class="cart-banner">
-      <h1 class="page-title cart-page-title-fix">Your Cart</h1>
-  </div>
+  <h1 class="page-title cart-page-title-fix cart-title-icon">
+    <i class="fa-solid fa-cart-shopping"></i>
+    Your Cart
+  </h1>
 
   <% if (!cart || !cart.items || cart.items.length === 0) { %>
 
@@ -14,25 +15,15 @@
 
   <% } else { %>
 
-    <!-- =====================================================
-         CASE 1 — ADMIN USERS (DO NOT USE CART)
-    ====================================================== -->
     <% if (user && user.isAdmin) { %>
 
       <div style="text-align:center; margin:50px auto;">
         <h2>Admins do not use the shopping cart.</h2>
         <p>This feature is only for customers.</p>
-        <a href="/dashboard" class="btn-primary" style="margin-top:20px;">
-          Go to Admin Dashboard
-        </a>
+        <a href="/dashboard" class="btn-primary" style="margin-top:20px;">Go to Admin Dashboard</a>
       </div>
 
     <% } else { %>
-
-      <!-- =====================================================
-           CASE 2 — GUESTS + LOGGED-IN CUSTOMERS
-           Same UI for both (Shopify-style layout)
-      ====================================================== -->
 
       <section class="cart-page">
 
@@ -41,21 +32,28 @@
 
           <div class="cart-main-title-row">
             <h2>Items</h2>
-            <p><%= cart.totalQty %> item<%= cart.totalQty === 1 ? '' : 's' %></p>
+            <p id="cartItemsCount"><%= cart.totalQty %> item<%= cart.totalQty === 1 ? '' : 's' %></p>
           </div>
 
+          <!-- UPDATED HEADER WITH CHECKBOX COLUMN -->
           <div class="cart-main-header">
+            <span class="chk-col">Select</span>
             <span>Product</span>
             <span>Price</span>
             <span>Quantity</span>
             <span>Total</span>
           </div>
 
-          <!-- LOOP ITEMS -->
           <% cart.items.forEach(item => { %>
-            <div class="cart-item-row">
+            <div class="cart-item-row" data-product-id="<%= item.productId %>" data-size="<%= item.size %>">
 
-              <!-- PRODUCT COLUMN -->
+              <!-- CHECKBOX COLUMN -->
+              <div class="cart-item-check">
+                <input type="checkbox" class="cart-select-item"
+                       value="<%= item.productId %>_<%= item.size %>">
+              </div>
+
+              <!-- PRODUCT -->
               <div class="cart-item-product">
                 <div class="cart-item-img">
                   <a href="/products/<%= item.productId %>">
@@ -64,12 +62,9 @@
                 </div>
 
                 <div class="cart-item-info">
-                  <a href="/products/<%= item.productId %>" class="cart-item-name">
-                    <%= item.name %>
-                  </a>
+                  <a href="/products/<%= item.productId %>" class="cart-item-name"><%= item.name %></a>
                   <p class="cart-item-brand">
-                    <%= item.brand %>
-                    <% if (item.size) { %> • Size <%= item.size %><% } %>
+                    <%= item.brand %> <% if (item.size) { %> • Size <%= item.size %><% } %>
                   </p>
                 </div>
               </div>
@@ -79,40 +74,31 @@
                 ₱<%= item.price.toLocaleString() %>
               </div>
 
-              <!-- QUANTITY COLUMN -->
+              <!-- QUANTITY + REMOVE -->
               <div class="qty-wrapper">
 
                 <!-- UPDATE FORM -->
-                <form action="/cart/update" method="POST" class="qty-update-form">
+                <form class="qty-update-form" method="POST" action="/cart/update">
                   <input type="hidden" name="productId" value="<%= item.productId %>">
                   <input type="hidden" name="size" value="<%= item.size %>">
 
                   <label class="qty-label">Qty:</label>
-
-                  <input type="number"
-                        name="quantity"
-                        value="<%= item.quantity %>"
-                        min="1"
-                        class="qty-input">
+                  <input type="number" name="quantity" value="<%= item.quantity %>" min="1" class="qty-input cart-qty-input">
 
                   <button type="submit" class="qty-update-btn">Update</button>
                 </form>
 
                 <!-- REMOVE FORM -->
-                <form action="/cart/remove"
-                      method="POST"
-                      class="qty-remove-form"
-                      onsubmit="return confirm('Remove <%= item.name %>?');">
-
+                <form class="qty-remove-form" method="POST" action="/cart/remove">
                   <input type="hidden" name="productId" value="<%= item.productId %>">
                   <input type="hidden" name="size" value="<%= item.size %>">
 
-                  <button class="qty-remove-btn">Remove</button>
+                  <button type="submit" class="qty-remove-btn">Remove</button>
                 </form>
 
               </div>
 
-              <!-- TOTAL -->
+              <!-- ITEM TOTAL -->
               <div class="cart-item-total">
                 ₱<%= item.subtotal.toLocaleString() %>
               </div>
@@ -123,9 +109,8 @@
           <!-- FOOTER -->
           <div class="cart-main-footer">
             <a href="/products" class="cart-link-continue">Continue shopping</a>
-
-            <form action="/cart/clear" method="POST"
-                  onsubmit="return confirm('Clear your entire cart?');">
+            |
+            <form action="/cart/clear" method="POST">
               <button type="submit" class="cart-link-update">Clear cart</button>
             </form>
           </div>
@@ -136,13 +121,13 @@
         <aside class="cart-summary-card">
           <h2>Order Summary</h2>
 
-          <p class="cart-summary-items">
+          <p id="cartSummaryItems" class="cart-summary-items">
             <%= cart.totalQty %> item<%= cart.totalQty === 1 ? '' : 's' %>
           </p>
 
           <div class="cart-summary-line">
             <span>Subtotal</span>
-            <span>₱<%= cart.totalAmount.toLocaleString() %></span>
+            <span id="cartSummarySubtotal">₱<%= cart.totalAmount.toLocaleString() %></span>
           </div>
 
           <p class="cart-summary-note">
@@ -157,7 +142,154 @@
       </section>
 
     <% } %>
-
   <% } %>
 
 </main>
+
+<!-- ============ TOAST ============ -->
+<div id="toast"></div>
+
+<!-- ============ REAL-TIME CART JS ============ -->
+<script>
+// Format currency
+function formatCurrency(num) {
+  return "₱" + Number(num).toLocaleString("en-PH");
+}
+
+// Toast
+function showToast(msg) {
+  const toast = document.getElementById("toast");
+  toast.textContent = msg;
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), 1500);
+}
+
+// Update summary + navbar count
+function updateSummary(totalQty, totalAmount) {
+  const itemsText = `${totalQty} item${totalQty === 1 ? "" : "s"}`;
+
+  document.getElementById("cartItemsCount").textContent = itemsText;
+  document.getElementById("cartSummaryItems").textContent = itemsText;
+  document.getElementById("cartSummarySubtotal").textContent = formatCurrency(totalAmount);
+
+  const counter = document.getElementById("navCartCount");
+  if (counter) {
+    counter.textContent = `(${totalQty})`;
+    counter.classList.add("animate");
+    setTimeout(() => counter.classList.remove("animate"), 450);
+  }
+}
+
+// ==================== UPDATE ITEM ====================
+document.querySelectorAll(".qty-update-form").forEach(form => {
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const row = form.closest(".cart-item-row");
+    const productId = form.querySelector("input[name='productId']").value;
+    const size = form.querySelector("input[name='size']").value;
+    const quantity = form.querySelector("input[name='quantity']").value;
+
+    const response = await fetch("/cart/update", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Accept": "application/json" },
+      body: JSON.stringify({ productId, size, quantity })
+    });
+
+    const result = await response.json();
+
+    if (!result.success) return showToast(result.message || "Error updating.");
+
+    if (result.itemRemoved) {
+      row.style.opacity = "0";
+      setTimeout(() => row.remove(), 250);
+      showToast("Item removed.");
+    } else {
+      row.querySelector(".cart-item-total").textContent = formatCurrency(result.itemSubtotal);
+      showToast("Quantity updated.");
+    }
+
+    if (result.cartTotalQty === 0) return location.reload();
+
+    updateSummary(result.cartTotalQty, result.cartTotalAmount);
+  });
+});
+
+// ==================== REMOVE ITEM ====================
+document.querySelectorAll(".qty-remove-form").forEach(form => {
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const row = form.closest(".cart-item-row");
+    const name = row.querySelector(".cart-item-name").textContent.trim();
+
+    if (!confirm(`Remove ${name}?`)) return;
+
+    const productId = form.querySelector("input[name='productId']").value;
+    const size = form.querySelector("input[name='size']").value;
+
+    const response = await fetch("/cart/remove", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Accept": "application/json" },
+      body: JSON.stringify({ productId, size })
+    });
+
+    const result = await response.json();
+
+    if (!result.success) return showToast(result.message || "Error removing.");
+
+    row.style.opacity = "0";
+    setTimeout(() => row.remove(), 250);
+
+    if (result.cartTotalQty === 0) return location.reload();
+
+    updateSummary(result.cartTotalQty, result.cartTotalAmount);
+    showToast("Item removed.");
+  });
+});
+
+// ==================== CHECKOUT SELECTED ITEMS ====================
+document.querySelector(".cart-checkout-btn").addEventListener("click", function (e) {
+  e.preventDefault();
+
+  const selected = [...document.querySelectorAll(".cart-select-item:checked")]
+    .map(cb => cb.value);
+
+  if (selected.length === 0) {
+    alert("Please select at least one item to checkout.");
+    return;
+  }
+
+  const query = encodeURIComponent(selected.join(","));
+  window.location.href = `/cart/checkout?selected=${query}`;
+});
+
+</script>
+
+<!-- ============ TOAST + ANIMATION CSS ============ -->
+<style>
+#toast {
+  position: fixed;
+  bottom: 25px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #000;
+  color: #fff;
+  padding: 12px 22px;
+  border-radius: 30px;
+  font-size: 0.9rem;
+  opacity: 0;
+  transition: opacity 0.4s ease, bottom 0.3s ease;
+  z-index: 9999;
+}
+#toast.show { opacity: 1; bottom: 38px; }
+
+#navCartCount.animate {
+  animation: cartBounce 0.45s ease-out;
+}
+@keyframes cartBounce {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+</style>

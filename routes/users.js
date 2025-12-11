@@ -30,15 +30,20 @@ async function findUserById(db, id) {
   });
 }
 
+// Small helper to escape regex for login email search
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 // ======================================================
-// REGISTER — SHOW PAGE
+// REGISTER PAGE
 // ======================================================
 router.get("/register", (req, res) => {
   res.render("register", { title: "Register" });
 });
 
 // ======================================================
-// REGISTER — SUBMIT
+// REGISTER SUBMIT
 // ======================================================
 router.post("/register", async (req, res) => {
   try {
@@ -54,7 +59,7 @@ router.post("/register", async (req, res) => {
       });
     }
 
-    const { firstName, lastName, email, password, confirmPassword } = req.body;
+    const { firstName, lastName, email: rawEmail, password, confirmPassword } = req.body;
 
     if (password !== confirmPassword) {
       return res.render("error", {
@@ -65,6 +70,7 @@ router.post("/register", async (req, res) => {
       });
     }
 
+    const email = (rawEmail || "").trim();
     const db = req.app.locals.client.db(req.app.locals.dbName);
     const usersCol = db.collection("users");
 
@@ -94,7 +100,7 @@ router.post("/register", async (req, res) => {
       tokenExpiry: new Date(Date.now() + 3600000),
       createdAt: new Date(),
       updatedAt: new Date(),
-      // optional cart field will be added later when user uses cart
+      cart: { items: [], totalQty: 0, totalAmount: 0 },
     };
 
     await usersCol.insertOne(newUser);
@@ -131,7 +137,7 @@ router.post("/register", async (req, res) => {
 });
 
 // ======================================================
-// EMAIL VERIFICATION
+// VERIFY EMAIL
 // ======================================================
 router.get("/verify/:token", async (req, res) => {
   try {
@@ -184,7 +190,7 @@ router.get("/verify/:token", async (req, res) => {
 });
 
 // ======================================================
-// LOGIN
+// LOGIN PAGE
 // ======================================================
 router.get("/login", (req, res) => {
   let message = null;
@@ -194,6 +200,9 @@ router.get("/login", (req, res) => {
   res.render("login", { title: "Login", message });
 });
 
+// ======================================================
+// LOGIN SUBMIT (WITH CART RESTORE)
+// ======================================================
 router.post("/login", async (req, res) => {
   try {
     const token = req.body["cf-turnstile-response"];
@@ -208,88 +217,79 @@ router.post("/login", async (req, res) => {
       });
     }
 
+    const rawEmail = (req.body.email || "").trim();
+
     const db = req.app.locals.client.db(req.app.locals.dbName);
     const usersCol = db.collection("users");
 
-    const user = await usersCol.findOne({ email: req.body.email });
+    const user = await usersCol.findOne({
+      email: { $regex: `^${escapeRegex(rawEmail)}$`, $options: "i" },
+    });
 
-    if (!user)
+    if (!user) {
       return res.render("error", {
         title: "Login Error",
         message: "User not found.",
         backLink: "/users/login",
         backText: "Try Again",
       });
+    }
 
-    if (!user.isEmailVerified)
+    if (!user.isEmailVerified) {
       return res.render("error", {
         title: "Login Error",
         message: "Please verify your email before logging in.",
         backLink: "/users/login",
         backText: "Try Again",
       });
+    }
 
-    if (user.accountStatus !== "active")
+    if (user.accountStatus !== "active") {
       return res.render("error", {
         title: "Login Error",
-        message: "Account is inactive.",
+        message: "Account is inactive or banned.",
         backLink: "/users/login",
         backText: "Try Again",
       });
+    }
 
     const valid = await bcrypt.compare(req.body.password, user.passwordHash);
-    if (!valid)
+    if (!valid) {
       return res.render("error", {
         title: "Login Error",
         message: "Invalid password.",
         backLink: "/users/login",
         backText: "Try Again",
       });
+    }
 
-    // keep any pre-login guest cart in memory
-    const existingSessionCart = req.session.cart || null;
-
-    // set session user
+    // ---------------------------
+    // SET USER SESSION
+    // ---------------------------
     req.session.user = {
       userId: user.userId,
-      firstName: user.firstName,
-      lastName: user.lastName,
+      firstName: user.firstName || "",
+      lastName: user.lastName || "",
       email: user.email,
       role: user.role,
       isEmailVerified: user.isEmailVerified,
       accountStatus: user.accountStatus,
+      address: user.address || "",
+      contactNumber: user.contactNumber || ""
     };
 
-    // Decide which cart to use:
-    // 1) If user already has a saved cart in DB, use that
-    // 2) Else if a guest cart exists in session, save it to DB
-    // 3) Else init an empty cart
-    if (user.cart && user.cart.items && user.cart.items.length > 0) {
-      req.session.cart = user.cart;
-    } else if (
-      existingSessionCart &&
-      existingSessionCart.items &&
-      existingSessionCart.items.length > 0
-    ) {
-      req.session.cart = existingSessionCart;
+    // ---------------------------
+    // RESTORE CART FROM DATABASE
+    // ---------------------------
+    req.session.cart = user.cart
+      ? user.cart
+      : { items: [], totalQty: 0, totalAmount: 0 };
 
-      await usersCol.updateOne(
-        { _id: user._id },
-        {
-          $set: {
-            cart: existingSessionCart,
-          },
-        }
-      );
-    } else {
-      req.session.cart = {
-        items: [],
-        totalQty: 0,
-        totalAmount: 0,
-      };
-    }
-
-    res.redirect("/users/dashboard");
+    // ---------------------------
+    // REDIRECT
+    // ---------------------------
+    if (user.role === "admin") return res.redirect("/admin/dashboard");
+    return res.redirect("/users/dashboard");
   } catch (err) {
     console.error("Login error:", err);
     res.render("error", {
@@ -302,46 +302,74 @@ router.post("/login", async (req, res) => {
 });
 
 // ======================================================
-// DASHBOARD with ORDER COUNTS (Lesson 21 requirement)
+//    USER DASHBOARD PAGE
 // ======================================================
 router.get("/dashboard", isAuthenticated, async (req, res) => {
+  if (req.session.user.role === "admin") {
+    return res.redirect("/admin/dashboard");
+  }
+
   try {
     const db = req.app.locals.client.db(req.app.locals.dbName);
     const ordersCol = db.collection("orders");
-
     const userId = req.session.user.userId;
 
-    // Count per status (based on YOUR MongoDB structure)
+    // ============================
+    // ORDER SUMMARY COUNTS
+    // ============================
     const totalOrders = await ordersCol.countDocuments({ userId });
-    const toPayOrders = await ordersCol.countDocuments({ userId, status: "to_pay" }); 
+    const toPayOrders = await ordersCol.countDocuments({ userId, status: "to_pay" });
     const toShipOrders = await ordersCol.countDocuments({ userId, status: "to_ship" });
     const toReceiveOrders = await ordersCol.countDocuments({ userId, status: "to_receive" });
     const completedOrders = await ordersCol.countDocuments({ userId, status: "completed" });
     const refundOrders = await ordersCol.countDocuments({ userId, status: "refund" });
     const cancelledOrders = await ordersCol.countDocuments({ userId, status: "cancelled" });
 
+    // ============================
+    // RECENT ORDERS (limit 3)
+    // ============================
+    let recentOrders = await ordersCol
+      .find({ userId })
+      .sort({ createdAt: -1 })
+      .limit(3)
+      .toArray();
+
+    recentOrders = recentOrders.map(order => ({
+      ...order,
+      totalQty: order.items.reduce((sum, item) => sum + item.quantity, 0)
+    }));
+
+    // ============================
+    // RENDER PAGE
+    // ============================
     res.render("dashboard", {
       title: "User Dashboard",
       user: req.session.user,
+
+      // summary counts
       totalOrders,
       toPayOrders,
       toShipOrders,
       toReceiveOrders,
       completedOrders,
       refundOrders,
-      cancelledOrders
+      cancelledOrders,
+
+      // preview list
+      recentOrders
     });
 
   } catch (err) {
     console.error("Dashboard error:", err);
     res.render("error", {
       title: "Dashboard Error",
-      message: "Something went wrong while loading your dashboard.",
+      message: "Something went wrong.",
       backLink: "/users/login",
-      backText: "Back to Login"
+      backText: "Back to Login",
     });
   }
 });
+
 
 // ======================================================
 // LOGOUT
@@ -350,13 +378,6 @@ router.get("/logout", (req, res) => {
   req.session.destroy(() => {
     res.redirect("/users/login?message=logout");
   });
-});
-
-// ======================================================
-// ADMIN SHORTCUT
-// ======================================================
-router.get("/admin", isAdmin, (req, res) => {
-  res.redirect("/users/list");
 });
 
 // ======================================================
@@ -385,9 +406,7 @@ router.get("/list", isAdmin, async (req, res) => {
 
     const users = await usersCol
       .find(filter)
-      .project({
-        passwordHash: 0,
-      })
+      .project({ passwordHash: 0 })
       .sort({ createdAt: -1 })
       .toArray();
 
@@ -397,6 +416,7 @@ router.get("/list", isAdmin, async (req, res) => {
       q,
       role,
       total: users.length,
+      admin: req.session.user,
     });
   } catch (err) {
     console.error("List error:", err);
@@ -408,9 +428,10 @@ router.get("/list", isAdmin, async (req, res) => {
     });
   }
 });
-// =======================
-// USER PROFILE (VIEW ONLY)
-// =======================
+
+// ======================================================
+// USER PROFILE (Self Only)
+// ======================================================
 router.get("/profile", isAuthenticated, async (req, res) => {
   try {
     const db = req.app.locals.client.db(req.app.locals.dbName);
@@ -423,28 +444,24 @@ router.get("/profile", isAuthenticated, async (req, res) => {
         title: "User Not Found",
         message: "Unable to load profile data.",
         backLink: "/users/dashboard",
-        backText: "Back"
+        backText: "Back",
       });
     }
 
-    res.render("profile", {
-      title: "My Profile",
-      user
-    });
-
+    res.render("profile", { title: "My Profile", user });
   } catch (err) {
     console.error("Profile error:", err);
     res.render("error", {
       title: "Profile Error",
       message: "Something went wrong.",
       backLink: "/users/dashboard",
-      backText: "Back"
+      backText: "Back",
     });
   }
 });
 
 // ======================================================
-// EDIT USER — BOTH ADMIN + NORMAL USER
+// EDIT USER — SELF ONLY
 // ======================================================
 router.get("/edit/:id", isAuthenticated, async (req, res) => {
   try {
@@ -461,22 +478,23 @@ router.get("/edit/:id", isAuthenticated, async (req, res) => {
     }
 
     const loggedIn = req.session.user;
+    const isSelf = loggedIn.userId === target.userId;
 
-    // ALLOW: Admin OR user editing themselves
-    if (loggedIn.role !== "admin" && loggedIn.userId !== target.userId) {
+    if (!isSelf) {
       return res.render("error", {
         title: "Access Denied",
-        message: "You are not allowed to edit this profile.",
+        message: "Admins cannot edit user profiles.",
         backLink: "/users/dashboard",
         backText: "Back",
       });
     }
+
     const updated = req.query.updated;
     res.render("edit-user", {
-      title: loggedIn.role === "admin" ? "Edit User" : "Edit Profile",
+      title: "Edit Profile",
       user: target,
       loggedInUser: loggedIn,
-      updated
+      updated,
     });
   } catch (err) {
     console.error("Edit GET error:", err);
@@ -490,7 +508,7 @@ router.get("/edit/:id", isAuthenticated, async (req, res) => {
 });
 
 // ======================================================
-// UPDATE USER — BOTH ADMIN + NORMAL USER
+// UPDATE USER — SELF ONLY (NOW UPDATES FIRST + LAST NAME)
 // ======================================================
 router.post("/edit/:id", isAuthenticated, async (req, res) => {
   try {
@@ -498,6 +516,7 @@ router.post("/edit/:id", isAuthenticated, async (req, res) => {
     const usersCol = db.collection("users");
 
     const target = await findUserById(db, req.params.id);
+
     if (!target) {
       return res.render("error", {
         title: "User Not Found",
@@ -509,10 +528,8 @@ router.post("/edit/:id", isAuthenticated, async (req, res) => {
 
     const loggedIn = req.session.user;
     const isSelf = loggedIn.userId === target.userId;
-    const isAdminUser = loggedIn.role === "admin";
 
-    // ACCESS CONTROL
-    if (!isAdminUser && !isSelf) {
+    if (!isSelf) {
       return res.render("error", {
         title: "Access Denied",
         message: "You cannot update another user's profile.",
@@ -521,60 +538,63 @@ router.post("/edit/:id", isAuthenticated, async (req, res) => {
       });
     }
 
-    // Extract all fields including address + contactNumber
-const {
-  firstName,
-  lastName,
-  email,
-  role,
-  accountStatus,
-  newPassword,
-  address,
-  contactNumber,
-} = req.body;
+    const {
+      firstName,
+      lastName,
+      address,
+      contactNumber,
+      newPassword
+    } = req.body;
 
-// BASE FIELDS
-const updateDoc = {
-  firstName,
-  lastName,
-  email,
-  address: address || "",
-  contactNumber: contactNumber || "",
-  updatedAt: new Date(),
-};
+    // ==============================
+    // CONTACT NUMBER NORMALIZATION
+    // ==============================
+    let finalContact = "";
 
-    // ADMIN-ONLY FIELDS
-    if (isAdminUser) {
-      updateDoc.role = role;
-      updateDoc.accountStatus = accountStatus;
+    if (contactNumber && contactNumber.trim() !== "") {
+      const digits = contactNumber.replace(/\D/g, "");
 
-      if (newPassword && newPassword.trim().length > 0) {
-        updateDoc.passwordHash = await bcrypt.hash(
-          newPassword.trim(),
-          saltRounds
-        );
+      if (digits.length === 10) {
+        finalContact = "+63" + digits;
+      } else if (digits.length === 11 && digits.startsWith("0")) {
+        finalContact = "+63" + digits.slice(1);
+      } else if (digits.length === 12 && digits.startsWith("63")) {
+        finalContact = "+63" + digits.slice(2);
+      } else if (digits.length === 13 && digits.startsWith("639")) {
+        finalContact = "+63" + digits.slice(-10);
+      } else {
+        return res.render("error", {
+          title: "Invalid Contact Number",
+          message:
+            "Please enter a valid PH mobile number (e.g. 09123456789 or 9123456789 or +639123456789).",
+          backLink: "/users/edit/" + target.userId,
+          backText: "Back",
+        });
       }
     }
 
-    // USER EDITING OWN PROFILE: ignore admin-only fields
-    await usersCol.updateOne(
-      { _id: target._id },
-      {
-        $set: updateDoc,
-      }
-    );
+    // Build update document — NOW including name updates
+    const updateDoc = {
+      firstName: firstName || target.firstName,
+      lastName: lastName || target.lastName,
+      address: address || "",
+      contactNumber: finalContact,
+      updatedAt: new Date(),
+    };
 
-    // If user edited own profile → update session
-    if (isSelf) {
-  req.session.user.firstName = firstName;
-  req.session.user.lastName = lastName;
-  req.session.user.email = email;
-  req.session.user.address = address;
-  req.session.user.contactNumber = contactNumber;
-}
+    if (newPassword && newPassword.trim().length > 0) {
+      updateDoc.passwordHash = await bcrypt.hash(newPassword.trim(), saltRounds);
+    }
 
+    await usersCol.updateOne({ _id: target._id }, { $set: updateDoc });
 
-    res.redirect(isAdminUser ? "/users/list" : "/users/edit/" + target.userId + "?updated=1");
+    // Update session immediately so UI reflects changes
+    req.session.user.firstName = updateDoc.firstName;
+    req.session.user.lastName = updateDoc.lastName;
+    req.session.user.address = updateDoc.address;
+    req.session.user.contactNumber = updateDoc.contactNumber;
+
+    res.redirect("/users/edit/" + target.userId + "?updated=1");
   } catch (err) {
     console.error("Edit POST error:", err);
     res.render("error", {
@@ -587,34 +607,71 @@ const updateDoc = {
 });
 
 // ======================================================
-// ADMIN — DELETE USER
+// DISABLED DELETE ROUTE (SAFETY)
 // ======================================================
-router.post("/delete/:id", isAdmin, async (req, res) => {
+router.post("/delete/:id", isAdmin, (req, res) => {
+  return res.render("error", {
+    title: "Action Disabled",
+    message: "Deleting user accounts is not allowed.",
+    backLink: "/users/list",
+    backText: "Back",
+  });
+});
+
+// ======================================================
+// BAN USER
+// ======================================================
+router.post("/ban/:id", isAdmin, async (req, res) => {
   try {
     const db = req.app.locals.client.db(req.app.locals.dbName);
     const usersCol = db.collection("users");
 
     const target = await findUserById(db, req.params.id);
-    if (!target) {
+
+    if (!target) return res.redirect("/users/list");
+
+    if (target.role === "admin" || target.userId === req.session.user.userId) {
       return res.render("error", {
-        title: "User Not Found",
-        message: "The user you are trying to delete does not exist.",
+        title: "Not Allowed",
+        message: "You cannot ban this account.",
         backLink: "/users/list",
         backText: "Back",
       });
     }
 
-    await usersCol.deleteOne({ _id: target._id });
+    await usersCol.updateOne(
+      { _id: target._id },
+      { $set: { accountStatus: "banned" } }
+    );
 
     res.redirect("/users/list");
   } catch (err) {
-    console.error("Delete user error:", err);
-    res.render("error", {
-      title: "Delete User Error",
-      message: "Something went wrong while deleting the user.",
-      backLink: "/users/list",
-      backText: "Back",
-    });
+    console.error("Ban user error:", err);
+    res.redirect("/users/list");
+  }
+});
+
+// ======================================================
+// ACTIVATE USER
+// ======================================================
+router.post("/activate/:id", isAdmin, async (req, res) => {
+  try {
+    const db = req.app.locals.client.db(req.app.locals.dbName);
+    const usersCol = db.collection("users");
+
+    const target = await findUserById(db, req.params.id);
+
+    if (!target) return res.redirect("/users/list");
+
+    await usersCol.updateOne(
+      { _id: target._id },
+      { $set: { accountStatus: "active" } }
+    );
+
+    res.redirect("/users/list");
+  } catch (err) {
+    console.error("Activate user error:", err);
+    res.redirect("/users/list");
   }
 });
 

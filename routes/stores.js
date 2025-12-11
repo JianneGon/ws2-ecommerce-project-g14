@@ -2,10 +2,20 @@
 const express = require('express');
 const router = express.Router();
 
+// =======================================
+// MIDDLEWARE: Block Admin From Store Pages
+// =======================================
+function blockAdmin(req, res, next) {
+  if (req.session?.user?.role === "admin") {
+    return res.redirect("/users/dashboard");
+  }
+  next();
+}
+
 // ===============================
 // Main grid (with store data)
 // ===============================
-router.get('/', (req, res) => {
+router.get('/', blockAdmin, (req, res) => {
   const stores = {
     philippines: [
       {
@@ -46,7 +56,7 @@ router.get('/', (req, res) => {
 =============================== */
 
 // Baguio
-router.get('/baguio', (req, res) => {
+router.get('/baguio', blockAdmin, (req, res) => {
   res.render('pages/store-details', {
     title: "Baguio Branch",
     store: {
@@ -64,7 +74,7 @@ router.get('/baguio', (req, res) => {
 });
 
 // Tagaytay
-router.get('/tagaytay', (req, res) => {
+router.get('/tagaytay', blockAdmin, (req, res) => {
   res.render('pages/store-details', {
     title: "Tagaytay Branch",
     store: {
@@ -82,7 +92,7 @@ router.get('/tagaytay', (req, res) => {
 });
 
 // BGC
-router.get('/bgc', (req, res) => {
+router.get('/bgc', blockAdmin, (req, res) => {
   res.render('pages/store-details', {
     title: "BGC Branch",
     store: {
@@ -100,7 +110,7 @@ router.get('/bgc', (req, res) => {
 });
 
 // Tokyo (Shibuya)
-router.get('/tokyo', (req, res) => {
+router.get('/tokyo', blockAdmin, (req, res) => {
   res.render('pages/store-details', {
     title: "Shibuya, Tokyo Branch",
     store: {
@@ -118,7 +128,7 @@ router.get('/tokyo', (req, res) => {
 });
 
 // Osaka
-router.get('/osaka', (req, res) => {
+router.get('/osaka', blockAdmin, (req, res) => {
   res.render('pages/store-details', {
     title: "Osaka Branch",
     store: {

@@ -3,10 +3,8 @@
 <div class="admin-products-container">
 
   <!-- Success / Error Message -->
-  <% if (message) { 
-       const alertClass = message.type === "success" ? "alert-success" : "alert-error";
-  %>
-    <div class="admin-alert <%= alertClass %>">
+  <% if (message) { %>
+    <div id="toast" class="toast <%= message.type === 'success' ? 'success' : 'error' %>">
       <%= message.text %>
     </div>
   <% } %>
@@ -16,6 +14,7 @@
 
     <input 
       type="text"
+      id="searchName"
       name="searchName"
       placeholder="Search name..."
       value="<%= searchName || '' %>"
@@ -24,6 +23,7 @@
 
     <input 
       type="text"
+      id="searchCategory"
       name="searchCategory"
       placeholder="Category"
       value="<%= searchCategory || '' %>"
@@ -37,36 +37,28 @@
 
   </form>
 
-  <!-- HEADER ACTIONS (Add + Edit/Delete Selected) -->
+  <!-- HEADER ACTIONS -->
   <div class="admin-action-header">
-
     <a href="/products/add" class="add-product-link">
       Add New Product
     </a>
-
-    <div class="admin-mass-actions">
-      <button type="button" id="editSelectedBtn" class="mass-btn blue">Edit Selected</button>
-      <button type="button" id="deleteSelectedBtn" class="mass-btn red">Delete Selected</button>
-    </div>
-
   </div>
 
-  <!-- PRODUCTS TABLE -->
   <div class="admin-table-wrapper">
     <table class="admin-products-table">
       <thead>
         <tr>
-          <th></th> <!-- Checkbox -->
           <th>Name</th>
           <th>Brand</th>
           <th>Category</th>
           <th>Price</th>
           <th>Stock</th>
           <th>Created</th>
+          <th style="text-align:center;">Actions</th>
         </tr>
       </thead>
 
-      <tbody>
+      <tbody id="productsTableBody">
         <% if (products.length === 0) { %>
           <tr>
             <td colspan="7" class="no-results">No products found.</td>
@@ -75,16 +67,6 @@
 
         <% products.forEach(p => { %>
           <tr>
-
-            <!-- CHECKBOX -->
-            <td>
-              <input 
-                type="checkbox"
-                class="product-checkbox"
-                value="<%= p.productId %>"
-              >
-            </td>
-
             <!-- IMAGE + NAME -->
             <td class="product-cell">
               <img 
@@ -104,68 +86,142 @@
               <%= p.createdAt ? new Date(p.createdAt).toLocaleDateString() : "-" %>
             </td>
 
+            <!-- ACTION BUTTONS -->
+            <td class="product-actions">
+              <a href="/products/edit/<%= p.productId %>" class="btn-action blue">Edit</a>
+
+              <form action="/products/delete/<%= p.productId %>" method="POST" class="delete-form">
+                <button type="submit" class="btn-action red delete-btn">Delete</button>
+              </form>
+            </td>
           </tr>
         <% }) %>
       </tbody>
     </table>
   </div>
-
 </div>
 
 <!-- =============================
-     MASS ACTIONS SCRIPT
+     DELETE CONFIRMATION MODAL
+============================= -->
+<div id="deleteModal" class="modal-overlay hidden">
+  <div class="modal-box">
+
+    <span class="modal-close" id="closeModal">&times;</span>
+
+    <div class="modal-icon">✖</div>
+
+    <div class="modal-title">Are you sure?</div>
+
+    <div class="modal-text">
+      Do you really want to delete this product?<br>
+      This process cannot be undone.
+    </div>
+
+    <div class="modal-buttons">
+      <button class="modal-btn cancel" id="cancelDelete">Cancel</button>
+      <button class="modal-btn delete" id="confirmDelete">Delete</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- =============================
+     SCRIPTS
 ============================= -->
 <script>
+/* ===========================
+   DELETE MODAL LOGIC
+=========================== */
+let deleteFormToSubmit = null;
 
-// EDIT SELECTED
-document.getElementById('editSelectedBtn').addEventListener('click', () => {
-  const checked = document.querySelectorAll('.product-checkbox:checked');
-
-  if (checked.length === 0) {
-    alert("Select a product to edit.");
-    return;
-  }
-  if (checked.length > 1) {
-    alert("Only select ONE product to edit.");
-    return;
-  }
-
-  const productId = checked[0].value;
-  window.location.href = "/products/edit/" + productId;
+document.querySelectorAll(".delete-btn").forEach(btn => {
+  btn.addEventListener("click", function(e) {
+    e.preventDefault();
+    deleteFormToSubmit = this.closest("form");
+    document.getElementById("deleteModal").classList.remove("hidden");
+    document.body.style.overflow = "hidden";
+  });
 });
 
-// DELETE SELECTED
-document.getElementById('deleteSelectedBtn').addEventListener('click', () => {
-  const checked = document.querySelectorAll('.product-checkbox:checked');
+document.getElementById("cancelDelete").onclick =
+document.getElementById("closeModal").onclick = function () {
+  document.getElementById("deleteModal").classList.add("hidden");
+  document.body.style.overflow = "auto";
+};
 
-  if (checked.length === 0) {
-    alert("Select at least 1 product to delete.");
-    return;
+document.getElementById("confirmDelete").onclick = function () {
+  if (deleteFormToSubmit) deleteFormToSubmit.submit();
+};
+
+/* ===========================
+   TOAST AUTO SHOW/HIDE
+=========================== */
+const toast = document.getElementById("toast");
+if (toast) {
+  setTimeout(() => toast.classList.add("show"), 100);
+  setTimeout(() => toast.classList.remove("show"), 4500);
+}
+
+/* ===========================
+   REAL-TIME SEARCH (AJAX)
+=========================== */
+const nameInput = document.getElementById("searchName");
+const categoryInput = document.getElementById("searchCategory");
+const tableBody = document.getElementById("productsTableBody");
+
+async function liveSearch() {
+  const name = nameInput.value.trim();
+  const category = categoryInput.value.trim();
+
+  const res = await fetch(`/products/admin/search?name=${name}&category=${category}`);
+  const data = await res.json();
+
+  if (!data.success) return;
+
+  let rows = "";
+
+  if (data.products.length === 0) {
+    rows = `<tr><td colspan="7" class="no-results">No products found.</td></tr>`;
+  } else {
+    data.products.forEach(p => {
+      rows += `
+        <tr>
+          <td class="product-cell">
+            <img src="${p.imageUrl}" class="product-thumb" onerror="this.src='/images/placeholder-shoe.jpg'">
+            <span>${p.name}</span>
+          </td>
+          <td>${p.brand || "-"}</td>
+          <td>${p.category || "-"}</td>
+          <td>₱${p.price.toLocaleString()}</td>
+          <td>${p.stock || 0}</td>
+          <td>${p.createdAt ? new Date(p.createdAt).toLocaleDateString() : "-"}</td>
+          <td class="product-actions">
+            <a href="/products/edit/${p.productId}" class="btn-action blue">Edit</a>
+            <form action="/products/delete/${p.productId}" method="POST" class="delete-form">
+              <button type="submit" class="btn-action red delete-btn">Delete</button>
+            </form>
+          </td>
+        </tr>
+      `;
+    });
   }
 
-  if (!confirm("Are you sure you want to delete the selected products?")) return;
+  tableBody.innerHTML = rows;
 
-  let index = 0;
+  // Re-bind delete modal events for new rows
+  document.querySelectorAll(".delete-btn").forEach(btn => {
+    btn.addEventListener("click", function(e) {
+      e.preventDefault();
+      deleteFormToSubmit = this.closest("form");
+      document.getElementById("deleteModal").classList.remove("hidden");
+      document.body.style.overflow = "hidden";
+    });
+  });
+}
 
-  function processDelete() {
-    if (index >= checked.length) {
-      window.location.reload();
-      return;
-    }
-
-    const productId = checked[index].value;
-
-    const form = document.createElement("form");
-    form.method = "POST";
-    form.action = "/products/delete/" + productId;
-
-    document.body.appendChild(form);
-    form.submit();
-
-    index++;
-  }
-
-  processDelete();
-});
+// Trigger live search on both inputs
+nameInput.addEventListener("input", liveSearch);
+categoryInput.addEventListener("input", liveSearch);
 
 </script>

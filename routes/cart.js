@@ -1,14 +1,22 @@
-// routes/cart.js
 const express = require("express");
 const router = express.Router();
 const { v4: uuidv4 } = require("uuid");
 const { ObjectId } = require("mongodb");
 const { isAuthenticated } = require("../middlewares/auth");
 
+// =======================================
+// MIDDLEWARE: Block Admin From Cart Pages
+// =======================================
+function blockAdmin(req, res, next) {
+  if (req.session?.user?.role === "admin") {
+    return res.redirect("/users/dashboard");
+  }
+  next();
+}
+
 // =======================
 // Helpers
 // =======================
-
 function initCart(req) {
   if (!req.session.cart) {
     req.session.cart = {
@@ -33,31 +41,26 @@ function recalcCart(cart) {
   cart.totalAmount = totalAmount;
 }
 
-// Save current session cart to logged-in user's document
 async function persistCartToUser(req) {
   try {
-    if (!req.session.user) return; // guest cart only in session
+    if (!req.session.user) return;
 
     const db = req.app.locals.client.db(req.app.locals.dbName);
     const usersCol = db.collection("users");
 
     await usersCol.updateOne(
       { userId: req.session.user.userId },
-      {
-        $set: {
-          cart: req.session.cart,
-        },
-      }
+      { $set: { cart: req.session.cart } }
     );
   } catch (err) {
-    console.error("Error persisting cart to user:", err);
+    console.error("Error persisting cart:", err);
   }
 }
 
 // =======================
-// GET /cart  (PROTECTED)
+// GET /cart
 // =======================
-router.get("/", isAuthenticated, (req, res) => {
+router.get("/", isAuthenticated, blockAdmin, (req, res) => {
   initCart(req);
 
   res.render("cart", {
@@ -68,14 +71,23 @@ router.get("/", isAuthenticated, (req, res) => {
 });
 
 // =======================
-// POST /cart/add  (PUBLIC - guests allowed)
+// POST /cart/add
+// Updated for AJAX support
 // =======================
-router.post("/add", async (req, res) => {
+router.post("/add", blockAdmin, async (req, res) => {
+  const wantsJSON =
+    req.headers.accept && req.headers.accept.includes("application/json");
+
   try {
     initCart(req);
 
     if (!req.body || Object.keys(req.body).length === 0) {
-      return res.json({ success: false, message: "Empty request body" });
+      if (wantsJSON) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Empty request body" });
+      }
+      return res.redirect("back");
     }
 
     const { productId, quantity, size } = req.body;
@@ -91,25 +103,27 @@ router.post("/add", async (req, res) => {
     }
 
     if (!product) {
-      const msg = "Product not found.";
-      if (req.xhr) return res.json({ success: false, message: msg });
-
+      if (wantsJSON) {
+        return res.json({ success: false, message: "Product not found." });
+      }
       return res.status(404).render("error", {
         title: "Product Not Found",
-        message: msg,
+        message: "Product not found.",
         backLink: "/products",
         backText: "Back",
       });
     }
 
     if (product.stock <= 0) {
-      const msg = "This product is out of stock.";
-
-      if (req.xhr) return res.json({ success: false, message: msg });
-
+      if (wantsJSON) {
+        return res.json({
+          success: false,
+          message: "This product is out of stock.",
+        });
+      }
       return res.render("error", {
         title: "Out of Stock",
-        message: msg,
+        message: "This product is out of stock.",
         backLink: `/products/${product.productId}`,
         backText: "Back",
       });
@@ -139,19 +153,26 @@ router.post("/add", async (req, res) => {
     recalcCart(cart);
     await persistCartToUser(req);
 
-    if (req.xhr || (req.headers.accept && req.headers.accept.includes("application/json"))) {
+    // AJAX request → return JSON
+    if (wantsJSON) {
       return res.json({
         success: true,
         cartCount: cart.totalQty,
       });
     }
 
+    // Normal request → redirect
     const backUrl = req.get("referer") || `/products/${product.productId}`;
     return res.redirect(backUrl);
   } catch (err) {
     console.error("Error adding to cart:", err);
 
-    if (req.xhr) return res.json({ success: false, message: "Server error" });
+    if (wantsJSON) {
+      return res.status(500).json({
+        success: false,
+        message: "Something went wrong while adding item to cart.",
+      });
+    }
 
     res.render("error", {
       title: "Cart Error",
@@ -163,18 +184,28 @@ router.post("/add", async (req, res) => {
 });
 
 // =======================
-// Update Cart (PROTECTED)
+// POST /cart/update  (AJAX-aware)
 // =======================
-router.post("/update", isAuthenticated, async (req, res) => {
+router.post("/update", isAuthenticated, blockAdmin, async (req, res) => {
+  const wantsJSON =
+    req.headers.accept && req.headers.accept.includes("application/json");
+
   try {
     initCart(req);
     const { productId, quantity, size } = req.body;
     const qty = parseInt(quantity);
+    const cart = req.session.cart;
+
+    let item = cart.items.find(
+      (it) => it.productId === productId && it.size === size
+    );
 
     if (isNaN(qty) || qty < 1) {
-      req.session.cart.items = req.session.cart.items.filter(
+      // remove item if exists
+      cart.items = cart.items.filter(
         (it) => !(it.productId === productId && it.size === size)
       );
+      item = null;
     } else {
       const db = req.app.locals.client.db(req.app.locals.dbName);
       const productsCol = db.collection("products");
@@ -186,21 +217,35 @@ router.post("/update", isAuthenticated, async (req, res) => {
 
       const maxStock = product ? product.stock : qty;
 
-      const item = req.session.cart.items.find(
-        (it) => it.productId === productId && it.size === size
-      );
-
       if (item) {
         item.quantity = Math.min(qty, maxStock);
       }
     }
 
-    recalcCart(req.session.cart);
+    recalcCart(cart);
     await persistCartToUser(req);
+
+    if (wantsJSON) {
+      return res.json({
+        success: true,
+        cartTotalQty: cart.totalQty,
+        cartTotalAmount: cart.totalAmount,
+        itemSubtotal: item ? item.subtotal : 0,
+        itemRemoved: !item,
+      });
+    }
 
     res.redirect("/cart");
   } catch (err) {
     console.error("Error updating cart:", err);
+
+    if (wantsJSON) {
+      return res.status(500).json({
+        success: false,
+        message: "Something went wrong while updating the cart.",
+      });
+    }
+
     res.render("error", {
       title: "Cart Error",
       message: "Something went wrong while updating the cart.",
@@ -211,23 +256,48 @@ router.post("/update", isAuthenticated, async (req, res) => {
 });
 
 // =======================
-// Remove item (PROTECTED)
+// POST /cart/remove  (AJAX-aware)
 // =======================
-router.post("/remove", isAuthenticated, async (req, res) => {
+router.post("/remove", isAuthenticated, blockAdmin, async (req, res) => {
+  const wantsJSON =
+    req.headers.accept && req.headers.accept.includes("application/json");
+
   try {
     initCart(req);
     const { productId, size } = req.body;
+    const cart = req.session.cart;
 
-    req.session.cart.items = req.session.cart.items.filter(
+    const beforeLen = cart.items.length;
+
+    cart.items = cart.items.filter(
       (it) => !(it.productId === productId && it.size === size)
     );
 
-    recalcCart(req.session.cart);
+    recalcCart(cart);
     await persistCartToUser(req);
+
+    const itemRemoved = cart.items.length < beforeLen;
+
+    if (wantsJSON) {
+      return res.json({
+        success: itemRemoved,
+        cartTotalQty: cart.totalQty,
+        cartTotalAmount: cart.totalAmount,
+        message: itemRemoved ? "Removed" : "Item not found in cart.",
+      });
+    }
 
     res.redirect("/cart");
   } catch (err) {
     console.error("Error removing from cart:", err);
+
+    if (wantsJSON) {
+      return res.status(500).json({
+        success: false,
+        message: "Something went wrong while removing the item.",
+      });
+    }
+
     res.render("error", {
       title: "Cart Error",
       message: "Something went wrong while removing the item.",
@@ -238,9 +308,9 @@ router.post("/remove", isAuthenticated, async (req, res) => {
 });
 
 // =======================
-// Clear cart (PROTECTED)
+// POST /cart/clear
 // =======================
-router.post("/clear", isAuthenticated, async (req, res) => {
+router.post("/clear", isAuthenticated, blockAdmin, async (req, res) => {
   try {
     req.session.cart = {
       items: [],
@@ -263,12 +333,20 @@ router.post("/clear", isAuthenticated, async (req, res) => {
 });
 
 // =======================
-// Checkout Page (PROTECTED)
+// GET /cart/checkout
 // =======================
-router.get("/checkout", isAuthenticated, (req, res) => {
+router.get("/checkout", isAuthenticated, blockAdmin, (req, res) => {
   initCart(req);
 
-  if (!req.session.cart.items.length) {
+  let cart = req.session.cart;
+
+  // Read selected items from query
+  const selected = req.query.selected
+    ? req.query.selected.split(",")
+    : null;
+
+  // Require selection
+  if (!cart.items.length) {
     return res.render("error", {
       title: "Empty Cart",
       message: "Your cart is empty.",
@@ -277,35 +355,89 @@ router.get("/checkout", isAuthenticated, (req, res) => {
     });
   }
 
+  // If no selection provided → show all (fallback behavior)
+  if (!selected) {
+    return res.render("checkout", {
+      title: "Checkout",
+      cart: cart,
+      user: req.session.user,
+    });
+  }
+
+  // Filter items based on selected values
+  const filteredItems = cart.items.filter((item) =>
+    selected.includes(`${item.productId}_${item.size}`)
+  );
+
+  if (!filteredItems.length) {
+    return res.render("error", {
+      title: "No Items Selected",
+      message: "Please select at least one item to checkout.",
+      backLink: "/cart",
+      backText: "Back to Cart",
+    });
+  }
+
+  // Calculate subtotal for filtered list
+  const filteredCart = {
+    items: filteredItems,
+    totalQty: filteredItems.reduce((t, i) => t + i.quantity, 0),
+    totalAmount: filteredItems.reduce((t, i) => t + i.subtotal, 0),
+  };
+
+  // Render checkout with filtered items
   res.render("checkout", {
     title: "Checkout",
-    cart: req.session.cart,
+    cart: filteredCart,
     user: req.session.user,
   });
 });
-
 // =======================
-// Finalize Checkout (PROTECTED)
+// POST /cart/checkout (updated for selected items + fake GCash)
 // =======================
-router.post("/checkout", isAuthenticated, async (req, res) => {
+router.post("/checkout", isAuthenticated, blockAdmin, async (req, res) => {
   try {
     initCart(req);
 
-    const cart = req.session.cart;
-    if (!cart.items.length) {
+    const allItems = req.session.cart.items;
+
+    // Read selected items from hidden field
+    const selected = req.body.selectedItems
+      ? req.body.selectedItems.split(",")
+      : null;
+
+    // Filter selected items
+    let itemsToProcess = allItems;
+
+    if (selected) {
+      itemsToProcess = allItems.filter((item) =>
+        selected.includes(`${item.productId}_${item.size}`)
+      );
+    }
+
+    // No items selected?
+    if (!itemsToProcess.length) {
       return res.render("error", {
-        title: "Empty Cart",
-        message: "Your cart is empty.",
-        backLink: "/products",
-        backText: "Shop Products",
+        title: "No Items Selected",
+        message: "Please select at least one item to checkout.",
+        backLink: "/cart",
+        backText: "Back to Cart",
       });
     }
+
+    // Build temporary cart
+    const tempCart = {
+      items: itemsToProcess,
+      totalQty: itemsToProcess.reduce((t, i) => t + i.quantity, 0),
+      totalAmount: itemsToProcess.reduce((t, i) => t + i.subtotal, 0),
+    };
 
     const db = req.app.locals.client.db(req.app.locals.dbName);
     const productsCol = db.collection("products");
     const ordersCol = db.collection("orders");
 
-    for (const item of cart.items) {
+    // STOCK VALIDATION
+    for (const item of tempCart.items) {
       const product = await productsCol.findOne({ productId: item.productId });
       if (!product || product.stock < item.quantity) {
         return res.render("error", {
@@ -317,6 +449,7 @@ router.post("/checkout", isAuthenticated, async (req, res) => {
       }
     }
 
+    // Extract form fields
     const {
       fullName,
       addressLine1,
@@ -327,17 +460,22 @@ router.post("/checkout", isAuthenticated, async (req, res) => {
       phone,
     } = req.body;
 
+    // NEW: payment method
+    const paymentMethod = (req.body.paymentMethod || "cod").toLowerCase();
+    const gcashNumber = (req.body.gcashNumber || "").trim();
+
     const orderId = uuidv4();
     const now = new Date();
     const user = req.session.user;
 
+    // Build order
     const order = {
       orderId,
       userId: user.userId,
       email: user.email,
-      items: cart.items,
-      totalQty: cart.totalQty,
-      totalAmount: cart.totalAmount,
+      items: tempCart.items,
+      totalQty: tempCart.totalQty,
+      totalAmount: tempCart.totalAmount,
       shipping: {
         fullName,
         addressLine1,
@@ -348,26 +486,44 @@ router.post("/checkout", isAuthenticated, async (req, res) => {
         phone,
       },
       status: "to_pay",
+      // NEW
+      paymentMethod,
+      paymentStatus: paymentMethod === "gcash" ? "pending" : "cod",
+      paidAt: null,
+      gcashNumber: paymentMethod === "gcash" ? gcashNumber : null,
       createdAt: now,
       updatedAt: now,
     };
 
+    // Save order
     await ordersCol.insertOne(order);
 
-    for (const item of cart.items) {
+    // Deduct stock
+    for (const item of tempCart.items) {
       await productsCol.updateOne(
         { productId: item.productId },
         { $inc: { stock: -item.quantity } }
       );
     }
 
-    req.session.cart = {
-      items: [],
-      totalQty: 0,
-      totalAmount: 0,
-    };
+    // Clear only purchased items from the SESSION cart
+    const selectedKeys = selected || tempCart.items.map(
+      (i) => `${i.productId}_${i.size}`
+    );
+
+    req.session.cart.items = allItems.filter(
+      (i) => !selectedKeys.includes(`${i.productId}_${i.size}`)
+    );
+
+    recalcCart(req.session.cart);
     await persistCartToUser(req);
 
+    // NEW: if GCash → redirect to QR page
+    if (paymentMethod === "gcash") {
+      return res.redirect(`/orders/pay/${orderId}`);
+    }
+
+    // Success page (same as before)
     return res.render("success", {
       title: "Order Placed",
       message: `Your order <strong>${orderId}</strong> has been placed successfully.`,

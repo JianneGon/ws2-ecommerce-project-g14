@@ -1,7 +1,9 @@
 <main class="product-detail-wrapper">
 
-  <!-- LEFT — PRODUCT IMAGE -->
+  <!-- LEFT — PRODUCT IMAGE + BACK LINK -->
   <div class="product-detail-left">
+    <a href="/products" class="back-to-products">← Back to Products</a>
+
     <img 
       src="<%= product.imageUrl || '/images/placeholder-shoe.jpg' %>" 
       alt="<%= product.name %>"
@@ -29,7 +31,6 @@
     </div>
 
     <% 
-      // Shared sizes array (used by both user & admin)
       let sizes = product.sizes && product.sizes.length
         ? product.sizes
         : ['US 6','US 6.5','US 7','US 7.5','US 8','US 8.5','US 9'].map(s => ({
@@ -63,30 +64,29 @@
     </div>
     <% } %>
 
-    <!-- ADMIN VIEW — READ-ONLY SIZES & STOCK -->
-<% if (user && user.role === "admin") { %>
-<div class="size-block admin-size-block">
-  <p class="label">Sizes & Stock</p>
+    <!-- ADMIN VIEW -->
+    <% if (user && user.role === "admin") { %>
+    <div class="size-block admin-size-block">
+      <p class="label">Sizes & Stock</p>
 
-  <table class="admin-size-table">
-    <thead>
-      <tr>
-        <th>Size</th>
-        <th>Stock</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% sizes.forEach(s => { %>
-        <tr>
-          <td><%= s.label %></td>
-          <td><%= s.stock %> pcs</td>
-        </tr>
-      <% }) %>
-    </tbody>
-  </table>
-</div>
-<% } %>
-
+      <table class="admin-size-table">
+        <thead>
+          <tr>
+            <th>Size</th>
+            <th>Stock</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% sizes.forEach(s => { %>
+            <tr>
+              <td><%= s.label %></td>
+              <td><%= s.stock %> pcs</td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <% } %>
 
     <!-- SKU -->
     <div class="style-block">
@@ -98,11 +98,12 @@
       <p class="stock-msg">Only <%= product.stock %> piece(s) left!</p>
     <% } %>
 
-    <!-- ADD TO CART + PROCEED CHECKOUT (CUSTOMERS / GUESTS ONLY) -->
+    <!-- ADD TO CART + PROCEED CHECKOUT -->
     <% if ((!user || user.role === "customer") && product.stock > 0) { %>
       <form id="addToCartForm" class="cart-section">
         <input type="hidden" name="productId" value="<%= product.productId %>">
         <input type="hidden" name="size" id="selectedSize" value="">
+        
         <label>Quantity:</label>
         <div class="qty-container">
             <input 
@@ -112,10 +113,11 @@
               min="1"
               max="<%= product.stock %>"
               class="qty-input">
-          </div>
+        </div>
 
-          <div class="cart-action-buttons">
+        <div class="cart-action-buttons">
           <button type="submit" class="btn-primary add-cart-btn">ADD TO CART</button>
+
           <button 
             type="button" 
             id="proceedCheckoutBtn"
@@ -123,22 +125,8 @@
             style="white-space:nowrap;">
             Proceed to Checkout
           </button>
-          </div>
-                </form>
-              <% } %>
-
-    <!-- ADMIN BUTTONS -->
-    <% if (user && user.role === "admin") { %>
-      <div class="admin-buttons">
-        <a href="/products/edit/<%= product.productId %>" class="admin-btn edit-btn">
-          Edit Product
-        </a>
-
-        <form action="/products/delete/<%= product.productId %>" method="POST"
-              onsubmit="return confirm('Delete this product?');" class="admin-delete-form">
-          <button class="admin-btn delete-btn">Delete Product</button>
-        </form>
-      </div>
+        </div>
+      </form>
     <% } %>
 
     <!-- CUSTOMER TABS -->
@@ -164,41 +152,30 @@
 
 </main>
 
-
-<!-- ====================================================== -->
-<!-- YOU MAY ALSO LIKE — SHOWN ONLY FOR CUSTOMERS & GUESTS -->
-<!-- ====================================================== -->
-
+<!-- YOU MAY ALSO LIKE -->
 <% if (!user || user.role === "customer") { %>
-
 <section class="recommend-section">
   <h2 class="recommend-title">YOU MAY ALSO LIKE</h2>
 
   <div class="recommend-grid">
     <% recommendations.forEach(item => { %>
       <a href="/products/<%= item.productId %>" class="recommend-card">
-        
         <div class="rec-img-wrapper">
           <img src="<%= item.imageUrl %>" alt="<%= item.name %>">
         </div>
-
         <p class="rec-name"><%= item.name %></p>
-
         <p class="rec-price">₱<%= item.price.toLocaleString() %></p>
-
       </a>
     <% }) %>
   </div>
 </section>
-
 <% } %>
-
-
 <!-- ======================================================================= -->
 <!-- JAVASCRIPT -->
 <!-- ======================================================================= -->
 
 <script>
+// SIZE SELECTOR
 document.querySelectorAll(".size-option").forEach(btn => {
   btn.addEventListener("click", () => {
     if (btn.classList.contains("size-disabled")) return;
@@ -225,7 +202,16 @@ document.querySelectorAll(".product-tabs .tab").forEach(tab => {
   });
 });
 
-// ADD TO CART
+// SHOW TOAST FUNCTION
+function showToast(message) {
+  const toast = document.getElementById("toast");
+  toast.textContent = message;
+  toast.classList.add("show");
+
+  setTimeout(() => toast.classList.remove("show"), 1500);
+}
+
+// ADD TO CART (AJAX)
 document.getElementById("addToCartForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
 
@@ -233,10 +219,7 @@ document.getElementById("addToCartForm")?.addEventListener("submit", async (e) =
   const size = document.querySelector("input[name='size']").value;
   const quantity = document.querySelector("input[name='quantity']").value;
 
-  if (!size) {
-    alert("Please select a size first.");
-    return;
-  }
+  if (!size) return showToast("Please select a size first.");
 
   const response = await fetch("/cart/add", {
     method: "POST",
@@ -250,24 +233,27 @@ document.getElementById("addToCartForm")?.addEventListener("submit", async (e) =
   const result = await response.json();
 
   if (result.success) {
+    // BOUNCE ANIMATION
     const counter = document.getElementById("navCartCount");
-    if (counter) counter.textContent = `(${result.cartCount})`;
-    alert("Added to cart!");
+    if (counter) {
+      counter.textContent = `(${result.cartCount})`;
+      counter.classList.add("animate");
+      setTimeout(() => counter.classList.remove("animate"), 450);
+    }
+
+    showToast("Added to cart!");
   } else {
-    alert("Failed: " + (result.message || "Unknown error"));
+    showToast(result.message || "Error adding to cart.");
   }
 });
 
-// PROCEED TO CHECKOUT
+// PROCEED TO CHECKOUT BUTTON
 document.getElementById("proceedCheckoutBtn")?.addEventListener("click", async () => {
   const productId = document.querySelector("input[name='productId']").value;
   const size = document.querySelector("input[name='size']").value;
   const quantity = document.querySelector("input[name='quantity']").value;
 
-  if (!size) {
-    alert("Please select a size first.");
-    return;
-  }
+  if (!size) return showToast("Please select a size first.");
 
   const response = await fetch("/cart/add", {
     method: "POST",
@@ -282,39 +268,87 @@ document.getElementById("proceedCheckoutBtn")?.addEventListener("click", async (
 
   if (result.success) {
     const counter = document.getElementById("navCartCount");
-    if (counter) counter.textContent = `(${result.cartCount})`;
+    if (counter) {
+      counter.textContent = `(${result.cartCount})`;
+      counter.classList.add("animate");
+      setTimeout(() => counter.classList.remove("animate"), 450);
+    }
 
-    window.location.href = "/cart/checkout";
+    showToast("Added — Redirecting...");
+    setTimeout(() => window.location.href = "/cart/checkout", 900);
+
   } else {
-    alert("Error: " + (result.message || "Unable to proceed."));
+    showToast(result.message || "Unable to proceed.");
   }
 });
 </script>
 
+<!-- ======================================================= -->
+<!-- TOAST + CART COUNTER ANIMATIONS -->
+<!-- ======================================================= -->
+
 <style>
-  .size-disabled {
-    opacity: .45;
-    cursor: not-allowed;
-    text-decoration: line-through;
-    border-color: #ccc !important;
-  }
-  .admin-size-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-    font-size: 0.95rem;
-  }
+/* CART COUNTER BOUNCE */
+#navCartCount.animate {
+  animation: cartBounce 0.45s ease-out;
+}
 
-  .admin-size-table th,
-  .admin-size-table td {
-    padding: 10px 6px;
-    text-align: left;
-    border-bottom: 1px solid #ddd;
-  }
+@keyframes cartBounce {
+  0%   { transform: scale(1); }
+  35%  { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
 
-  .admin-size-table th {
-    font-weight: 600;
-    background-color: #fafafa;
-  }
+/* TOAST BOX */
+#toast {
+  position: fixed;
+  bottom: 25px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #000;
+  color: #fff;
+  padding: 12px 22px;
+  border-radius: 30px;
+  font-size: 0.9rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease, bottom 0.3s ease;
+  z-index: 999999;
+}
 
+#toast.show {
+  opacity: 1;
+  bottom: 38px;
+}
+
+/* ADMIN SIZE TABLE */
+.admin-size-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  font-size: 0.95rem;
+}
+
+.admin-size-table th,
+.admin-size-table td {
+  padding: 10px 6px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.admin-size-table th {
+  font-weight: 600;
+  background-color: #fafafa;
+}
+
+/* DISABLED SIZE BUTTON */
+.size-disabled {
+  opacity: .4;
+  cursor: not-allowed;
+  text-decoration: line-through;
+  border-color: #ccc !important;
+}
 </style>
+
+<!-- TOAST CONTAINER -->
+<div id="toast"></div>
