@@ -1,70 +1,392 @@
 <h1 class="page-title">Checkout</h1>
 
-<div class="form-container">
-  <h2 class="form-title">Review Your Order</h2>
-  <p class="form-subtitle">Confirm your details to complete your purchase.</p>
+<div class="checkout-page">
+  <div class="checkout-grid">
 
-  <% if (typeof cart !== "undefined" && cart && cart.items && cart.items.length > 0) { %>
+    <!-- ================================
+          LEFT COLUMN — SHIPPING FORM
+    ================================= -->
+    <div class="checkout-left">
 
-    <!-- =============================
-         CART CHECKOUT (multiple items)
-    ============================== -->
-    <div class="dashboard-info">
-      <h3 style="margin-bottom:10px;">Items in Cart</h3>
+      <h2 class="section-title">Review Your Order</h2>
+      <p class="section-subtitle">Confirm your details to complete your purchase.</p>
 
-      <ul style="padding-left:18px; line-height:1.7;">
-        <% cart.items.forEach(item => { %>
-          <li>
-            <strong><%= item.name %></strong> — 
-            <%= item.quantity %> × ₱<%= item.price.toFixed(2) %>  
-            = ₱<%= item.subtotal.toFixed(2) %>
-          </li>
-        <% }) %>
-      </ul>
+      <% if (cart && cart.items?.length > 0) { %>
 
-      <p><strong>Total Items:</strong> <%= cart.totalQty %></p>
-      <p><strong>Total Amount:</strong> ₱<%= cart.totalAmount.toFixed(2) %></p>
+      <!-- MULTIPLE ITEMS CHECKOUT -->
+      <form id="cartCheckoutForm" action="/cart/checkout" method="POST" class="checkout-form">
+
+        <input type="hidden" name="selectedItems" id="selectedItemsField">
+
+        <input type="text" name="fullName" id="fullName" placeholder="Full Name" required>
+        <div class="field-error" id="err-fullName"></div>
+
+        <input type="text" name="addressLine1" id="addressLine1" placeholder="Address Line 1" required>
+        <div class="field-error" id="err-addressLine1"></div>
+
+        <input type="text" name="addressLine2" id="addressLine2" placeholder="Address Line 2 (Optional)">
+
+        <input type="text" name="city" id="city" placeholder="City" required>
+        <div class="field-error" id="err-city"></div>
+
+        <input type="text" name="region" id="region" placeholder="Region / Province" required>
+        <div class="field-error" id="err-region"></div>
+
+        <input type="text" name="postalCode" id="postalCode" placeholder="Postal Code" required>
+        <div class="field-error" id="err-postalCode"></div>
+
+        <input type="text" name="phone" id="phone" placeholder="Mobile Number" required>
+        <div class="field-error" id="err-phone"></div>
+
+        <button type="submit" class="btn-submit-wide">Place Order</button>
+        <a href="/cart" class="back-to-cart">← Back to Cart</a>
+      </form>
+
+      <% } else { %>
+
+      <!-- SINGLE ITEM CHECKOUT -->
+      <form id="singleCheckoutForm" action="/orders/checkout" method="POST" class="checkout-form">
+
+        <input type="hidden" name="productId" value="<%= product.productId %>">
+        <input type="hidden" name="quantity" value="<%= quantity %>">
+
+        <input type="text" name="fullName" id="fullName" placeholder="Full Name" required>
+        <div class="field-error" id="err-fullName"></div>
+
+        <input type="text" name="addressLine1" id="addressLine1" placeholder="Address Line 1" required>
+        <div class="field-error" id="err-addressLine1"></div>
+
+        <input type="text" name="addressLine2" id="addressLine2" placeholder="Address Line 2 (Optional)">
+
+        <input type="text" name="city" id="city" placeholder="City" required>
+        <div class="field-error" id="err-city"></div>
+
+        <input type="text" name="region" id="region" placeholder="Region / Province" required>
+        <div class="field-error" id="err-region"></div>
+
+        <input type="text" name="postalCode" id="postalCode" placeholder="Postal Code" required>
+        <div class="field-error" id="err-postalCode"></div>
+
+        <input type="text" name="phone" id="phone" placeholder="Mobile Number" required>
+        <div class="field-error" id="err-phone"></div>
+
+        <button type="submit" class="btn-submit-wide">Place Order</button>
+        <a href="/products/<%= product.productId %>" class="back-to-cart">← Back</a>
+      </form>
+
+      <% } %>
+
     </div>
 
-    <form action="/cart/checkout" method="POST" class="reset-form" style="margin-top:25px;">
-      <input type="text" name="fullName" placeholder="Full Name" required>
-      <input type="text" name="addressLine1" placeholder="Address Line 1" required>
-      <input type="text" name="addressLine2" placeholder="Address Line 2 (Optional)">
-      <input type="text" name="city" placeholder="City" required>
-      <input type="text" name="region" placeholder="Region / Province" required>
-      <input type="text" name="postalCode" placeholder="Postal Code" required>
-      <input type="text" name="phone" placeholder="Mobile Number" required>
+    <!-- ================================
+          RIGHT COLUMN — ORDER SUMMARY + PAYMENT PANEL
+    ================================= -->
+    <div class="checkout-right">
 
-      <button type="submit" class="btn-submit">Place Order</button>
-    </form>
+      <!-- ORDER SUMMARY -->
+      <div class="summary-card">
+        <h3 class="summary-title">Order Summary</h3>
 
-  <% } else { %>
+        <% if (cart && cart.items?.length > 0) { %>
 
-    <!-- =============================
-         SINGLE PRODUCT CHECKOUT
-    ============================== -->
-    <div class="dashboard-info">
-      <p><strong>Product:</strong> <%= product.name %></p>
-      <p><strong>Brand:</strong> <%= product.brand %></p>
-      <p><strong>Price:</strong> ₱<%= product.price.toFixed(2) %></p>
-      <p><strong>Quantity:</strong> <%= quantity %></p>
-      <p><strong>Total:</strong> ₱<%= totalAmount.toFixed(2) %></p>
-    </div>
+          <% cart.items.forEach(item => { %>
+            <div class="summary-item">
+              <img src="<%= item.imageUrl %>" class="summary-img">
 
-    <form action="/orders/checkout" method="POST" class="reset-form" style="margin-top:25px;">
-      <input type="hidden" name="productId" value="<%= product.productId %>">
-      <input type="hidden" name="quantity" value="<%= quantity %>">
+              <div class="item-details">
+                <p class="item-name"><%= item.name %></p>
+                <p class="item-meta"><%= item.quantity %> × ₱<%= Number(item.price).toLocaleString() %></p>
+              </div>
 
-      <input type="text" name="fullName" placeholder="Full Name" required>
-      <input type="text" name="addressLine1" placeholder="Address Line 1" required>
-      <input type="text" name="addressLine2" placeholder="Address Line 2 (Optional)">
-      <input type="text" name="city" placeholder="City" required>
-      <input type="text" name="region" placeholder="Region / Province" required>
-      <input type="text" name="postalCode" placeholder="Postal Code" required>
-      <input type="text" name="phone" placeholder="Mobile Number" required>
+              <p class="item-price">₱<%= Number(item.subtotal).toLocaleString() %></p>
+            </div>
+          <% }) %>
 
-      <button type="submit" class="btn-submit">Place Order</button>
-    </form>
+          <div class="summary-footer">
+            <p><strong>Total Items:</strong> <%= cart.totalQty %></p>
+            <p><strong>Total Amount:</strong> ₱<%= Number(cart.totalAmount).toLocaleString() %></p>
+          </div>
 
-  <% } %>
-</div>
+        <% } else { %>
+
+          <div class="summary-item">
+            <img src="<%= product.imageUrl %>" class="summary-img">
+
+            <div class="item-details">
+              <p class="item-name"><%= product.name %></p>
+              <p class="item-meta">Quantity: <%= quantity %></p>
+            </div>
+
+            <p class="item-price">₱<%= Number(totalAmount).toLocaleString() %></p>
+          </div>
+
+          <div class="summary-footer">
+            <p><strong>Brand:</strong> <%= product.brand %></p>
+            <p><strong>Price:</strong> ₱<%= Number(product.price).toLocaleString() %></p>
+            <p><strong>Total:</strong> ₱<%= Number(totalAmount).toLocaleString() %></p>
+          </div>
+
+        <% } %>
+      </div>
+
+      <!-- ================================
+            PAYMENT METHOD PANEL
+      ================================= -->
+      <div class="payment-card">
+        <h3 class="summary-title">Payment Method</h3>
+
+        <div class="payment-method-buttons">
+          <button type="button" class="pm-btn" data-method="card">
+            <i class="fa-regular fa-credit-card"></i>
+            <span>Card</span>
+          </button>
+
+          <button type="button" class="pm-btn" data-method="gcash">
+            <i class="fa-solid fa-wallet"></i>
+            <span>GCash</span>
+          </button>
+
+          <button type="button" class="pm-btn active" data-method="cod">
+            <i class="fa-solid fa-coins"></i>
+            <span>COD</span>
+          </button>
+        </div>
+
+        <!-- Hidden payment method value -->
+        <input type="hidden"
+               name="paymentMethod"
+               id="paymentMethodInput"
+               form="<%= cart ? 'cartCheckoutForm' : 'singleCheckoutForm' %>"
+               value="cod">
+
+        <!-- ============ CARD FIELDS ============ -->
+        <div class="pm-section card-section hidden">
+
+          <label for="cardName">Name on Card</label>
+          <input type="text" name="cardName" id="cardName" placeholder="Full Name">
+          <div class="field-error" id="err-cardName"></div>
+
+          <label for="cardNumber">Card Number</label>
+          <input type="text" name="cardNumber" id="cardNumber" placeholder="0000 0000 0000 0000">
+          <div class="field-error" id="err-cardNumber"></div>
+
+          <div class="row">
+            <div>
+              <label for="cardExpiry">Expiry</label>
+              <input type="text" name="cardExpiry" id="cardExpiry" placeholder="MM/YY">
+              <div class="field-error" id="err-cardExpiry"></div>
+            </div>
+            <div>
+              <label for="cardCVV">CVV</label>
+              <input type="text" name="cardCVV" id="cardCVV" placeholder="123">
+              <div class="field-error" id="err-cardCVV"></div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ============ GCASH FIELDS ============ -->
+        <div class="pm-section gcash-section hidden">
+
+          <label for="gcashNumber">GCash Number</label>
+          <input type="text" name="gcashNumber" id="gcashNumber" placeholder="09XXXXXXXXX">
+          <div class="field-error" id="err-gcashNumber"></div>
+
+          <p class="pm-note">You will receive a confirmation request on your GCash app.</p>
+
+        </div>
+
+        <!-- ============ COD FIELDS ============ -->
+        <div class="pm-section cod-section">
+          <p class="pm-note"><strong>No upfront payment needed.</strong></p>
+          <p class="pm-note">Prepare exact amount upon delivery.</p>
+        </div>
+
+      </div>
+
+    </div> <!-- checkout-right -->
+
+  </div> <!-- checkout-grid -->
+</div> <!-- checkout-page -->
+
+<!-- ==========================================
+     PAYMENT METHOD & FORM VALIDATION LOGIC
+========================================== -->
+<script>
+  // ============================
+  // SELECTED ITEMS (CART)
+  // ============================
+  const selected = new URLSearchParams(window.location.search).get("selected");
+  if (selected && document.getElementById("selectedItemsField")) {
+    document.getElementById("selectedItemsField").value = selected;
+  }
+
+  // ============================
+  // PAYMENT METHOD TOGGLING
+  // ============================
+  const pmBtns = document.querySelectorAll(".pm-btn");
+  const pmInput = document.getElementById("paymentMethodInput");
+
+  const cardSection = document.querySelector(".card-section");
+  const gcashSection = document.querySelector(".gcash-section");
+  const codSection = document.querySelector(".cod-section");
+
+  pmBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      pmBtns.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      pmInput.value = btn.dataset.method;
+
+      cardSection.classList.add("hidden");
+      gcashSection.classList.add("hidden");
+      codSection.classList.add("hidden");
+
+      if (btn.dataset.method === "card") cardSection.classList.remove("hidden");
+      if (btn.dataset.method === "gcash") gcashSection.classList.remove("hidden");
+      if (btn.dataset.method === "cod") codSection.classList.remove("hidden");
+    });
+  });
+
+  // ============================
+  // FORM VALIDATION HELPERS
+  // ============================
+  function clearErrors() {
+    document.querySelectorAll(".field-error").forEach(el => el.textContent = "");
+    document.querySelectorAll(".has-error").forEach(el => el.classList.remove("has-error"));
+  }
+
+  function showError(fieldId, msg) {
+    const errEl = document.getElementById("err-" + fieldId);
+    const inputEl = document.getElementById(fieldId);
+    if (errEl) errEl.textContent = msg;
+    if (inputEl) inputEl.classList.add("has-error");
+  }
+
+  function isEmpty(value) {
+    return !value || value.trim() === "";
+  }
+
+  function isDigits(value) {
+    return /^\d+$/.test(value);
+  }
+
+  // ============================
+  // MAIN VALIDATION
+  // ============================
+  function validateForm(activeForm) {
+    clearErrors();
+    let isValid = true;
+
+    // Common shipping fields
+    const fullName = document.getElementById("fullName");
+    const addressLine1 = document.getElementById("addressLine1");
+    const city = document.getElementById("city");
+    const region = document.getElementById("region");
+    const postalCode = document.getElementById("postalCode");
+    const phone = document.getElementById("phone");
+
+    if (!fullName || !addressLine1 || !city || !region || !postalCode || !phone) {
+      // In case IDs not found for some reason
+      return true;
+    }
+
+    if (isEmpty(fullName.value)) {
+      showError("fullName", "Full name is required.");
+      isValid = false;
+    }
+
+    if (isEmpty(addressLine1.value)) {
+      showError("addressLine1", "Address Line 1 is required.");
+      isValid = false;
+    }
+
+    if (isEmpty(city.value)) {
+      showError("city", "City is required.");
+      isValid = false;
+    }
+
+    if (isEmpty(region.value)) {
+      showError("region", "Region / Province is required.");
+      isValid = false;
+    }
+
+    if (isEmpty(postalCode.value) || !isDigits(postalCode.value)) {
+      showError("postalCode", "Valid postal code is required.");
+      isValid = false;
+    }
+
+    // Phone – PH style: 11 digits, starts with 09
+    const phoneVal = phone.value.replace(/\s+/g, "");
+    if (!isDigits(phoneVal) || phoneVal.length !== 11 || !phoneVal.startsWith("09")) {
+      showError("phone", "Enter a valid PH mobile number (11 digits, starts with 09).");
+      isValid = false;
+    }
+
+    // Payment method specific
+    const paymentMethod = pmInput ? pmInput.value : "cod";
+
+    if (paymentMethod === "card") {
+      const cardName = document.getElementById("cardName");
+      const cardNumber = document.getElementById("cardNumber");
+      const cardExpiry = document.getElementById("cardExpiry");
+      const cardCVV = document.getElementById("cardCVV");
+
+      if (isEmpty(cardName.value)) {
+        showError("cardName", "Name on card is required.");
+        isValid = false;
+      }
+
+      const rawCard = cardNumber.value.replace(/\s+/g, "");
+      if (!isDigits(rawCard) || rawCard.length !== 16) {
+        showError("cardNumber", "Card number must be 16 digits.");
+        isValid = false;
+      }
+
+      const expVal = cardExpiry.value.trim();
+      const expMatch = /^(\d{2})\/(\d{2})$/.test(expVal);
+      if (!expMatch) {
+        showError("cardExpiry", "Expiry must be in MM/YY format.");
+        isValid = false;
+      }
+
+      if (!isDigits(cardCVV.value) || cardCVV.value.length !== 3) {
+        showError("cardCVV", "CVV must be 3 digits.");
+        isValid = false;
+      }
+    }
+
+    if (paymentMethod === "gcash") {
+      const gcashNumber = document.getElementById("gcashNumber");
+      const gcashVal = gcashNumber.value.replace(/\s+/g, "");
+      if (!isDigits(gcashVal) || gcashVal.length !== 11 || !gcashVal.startsWith("09")) {
+        showError("gcashNumber", "Enter a valid GCash number (11 digits, starts with 09).");
+        isValid = false;
+      }
+    }
+
+    return isValid;
+  }
+
+  // ============================
+  // ATTACH TO BOTH FORMS
+  // ============================
+  const cartForm = document.getElementById("cartCheckoutForm");
+  const singleForm = document.getElementById("singleCheckoutForm");
+
+  if (cartForm) {
+    cartForm.addEventListener("submit", (e) => {
+      if (!validateForm(cartForm)) {
+        e.preventDefault();
+      }
+    });
+  }
+
+  if (singleForm) {
+    singleForm.addEventListener("submit", (e) => {
+      if (!validateForm(singleForm)) {
+        e.preventDefault();
+      }
+    });
+  }
+</script>

@@ -35,7 +35,7 @@
 
         <!-- PRICE COLUMN -->
         <div class="col-price">
-          ₱<%= item.price.toFixed(2) %>
+          ₱<%= Number(item.price).toLocaleString() %>
         </div>
 
         <!-- QUANTITY COLUMN -->
@@ -45,7 +45,7 @@
 
         <!-- TOTAL COLUMN -->
         <div class="col-total">
-          ₱<%= item.subtotal.toFixed(2) %>
+          ₱<%= Number(item.subtotal).toLocaleString() %>
         </div>
 
       </div>
@@ -78,24 +78,57 @@
     <div class="merged-card">
       <h2 class="card-title">Order Summary</h2>
 
+      <!-- ORDER STATUS -->
       <div class="summary-row">
         <span>Status:</span>
-        <strong><%= order.status.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()) %></strong>
+        <strong>
+          <%= (order.status || "N/A")
+                .toString()
+                .replace(/_/g, " ")
+                .replace(/\b\w/g, c => c.toUpperCase()) %>
+        </strong>
       </div>
 
+      <!-- MODE OF PAYMENT (ALL CAPS) -->
+      <div class="summary-row">
+        <span>Mode of Payment:</span>
+        <strong>
+          <%= (order.paymentMethod || "N/A").toString().toUpperCase() %>
+        </strong>
+      </div>
+
+      <!-- PAYMENT STATUS (ALL CAPS) -->
+      <div class="summary-row">
+        <span>Payment Status:</span>
+        <strong>
+          <%= (order.paymentStatus || "N/A").toString().toUpperCase() %>
+        </strong>
+      </div>
+
+      <!-- PAID AT (ONLY IF PAID) -->
+      <% if (order.paidAt) { %>
+        <div class="summary-row">
+          <span>Paid At:</span>
+          <strong><%= new Date(order.paidAt).toLocaleString() %></strong>
+        </div>
+      <% } %>
+
+      <!-- PLACED ON -->
       <div class="summary-row">
         <span>Placed On:</span>
         <strong><%= order.createdAt.toLocaleString() %></strong>
       </div>
 
+      <!-- TOTAL ITEMS -->
       <div class="summary-row">
         <span>Total Items:</span>
         <strong><%= order.totalQty %></strong>
       </div>
 
+      <!-- TOTAL AMOUNT -->
       <div class="summary-row total-amount">
         <span>Total Amount:</span>
-        <strong>₱<%= order.totalAmount.toFixed(2) %></strong>
+        <strong>₱<%= Number(order.totalAmount).toLocaleString() %></strong>
       </div>
     </div>
 
@@ -113,8 +146,12 @@
 
         <label for="status">Select new status:</label>
         <select name="status" id="status" required>
-          <option value="to_pay" <%= order.status === "to_pay" ? "selected" : "" %>>To Pay</option>
+
+          <!-- NEW: PAID OPTION -->
+          <option value="paid" <%= order.status === "paid" ? "selected" : "" %>>Paid</option>
+
           <option value="to_ship" <%= order.status === "to_ship" ? "selected" : "" %>>To Ship</option>
+          <option value="shipped" <%= order.status === "shipped" ? "selected" : "" %>>Shipped</option>
           <option value="to_receive" <%= order.status === "to_receive" ? "selected" : "" %>>To Receive</option>
           <option value="completed" <%= order.status === "completed" ? "selected" : "" %>>Completed</option>
           <option value="refund" <%= order.status === "refund" ? "selected" : "" %>>Refund</option>
@@ -130,8 +167,8 @@
 
 <div class="dashboard-actions">
   <% if (user && user.role === 'admin') { %>
-    <a href="/admin/orders" class="btn-back">Back to Orders</a>
+    <a href="/admin/orders" class="back-link">Back to Orders</a>
   <% } else { %>
-    <a href="/orders" class="btn-back">Back to Orders</a>
+    <a href="/orders" class="back-link">Back to Orders</a>
   <% } %>
 </div>

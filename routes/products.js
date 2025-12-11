@@ -71,6 +71,31 @@ const upload = multer({
 });
 
 // =====================================================
+// BLOCK ADMIN FROM CUSTOMER PRODUCT PAGES
+// =====================================================
+router.use((req, res, next) => {
+  if (req.session.user && req.session.user.role === "admin") {
+
+    // Allow admin dashboard & admin product routes
+    if (
+      req.path.startsWith("/admin") ||
+      req.path.startsWith("/add") ||
+      req.path.startsWith("/edit") ||
+      req.path.startsWith("/delete")
+    ) {
+      return next();
+    }
+
+    // Block admin from customer product listing & product details
+    if (req.path === "/" || !req.path.startsWith("/admin")) {
+      return res.redirect("/products/admin/products");
+    }
+  }
+
+  next();
+});
+
+// =====================================================
 // PUBLIC PRODUCT LIST (/products)
 // =====================================================
 router.get("/", async (req, res) => {
@@ -78,41 +103,108 @@ router.get("/", async (req, res) => {
     const db = req.app.locals.client.db(req.app.locals.dbName);
     const productsCol = db.collection("products");
 
+    // ---------------------------------------------
+    // Filter setup
+    // ---------------------------------------------
     const filter = {};
-    const options = {};
 
-    if (req.query.brand) {
-      filter.brand = { $regex: `^${req.query.brand}$`, $options: "i" };
+    // Search by name
+    const name = (req.query.name || "").trim();
+    if (name) {
+      filter.name = { $regex: name, $options: "i" };
     }
 
-    if (req.query.budget) {
-      const budget = Number(req.query.budget);
-      if (!isNaN(budget)) filter.price = { $lte: budget };
+    // Filter by brand
+    const brand = (req.query.brand || "").trim();
+    if (brand) {
+      filter.brand = { $regex: brand, $options: "i" };
     }
 
-    if (req.query.sort === "latest") {
-      options.sort = { createdAt: -1 };
+    // Filter by budget
+    const budget = req.query.budget;
+    if (budget) {
+      const maxPrice = Number(budget);
+      if (!Number.isNaN(maxPrice)) {
+        filter.price = { $lte: maxPrice };
+      }
     }
 
-    const products = await productsCol.find(filter, options).toArray();
+    // ---------------------------------------------
+    // Sorting setup (⬅ FIX INCLUDED HERE)
+    // ---------------------------------------------
+    const sort = req.query.sort || "";  // ALWAYS defined
 
+    let sortOption = {};                // ALWAYS defined
+    if (sort === "price_asc") {
+      sortOption = { price: 1 };
+    } 
+    else if (sort === "price_desc") {
+      sortOption = { price: -1 };
+    }
+
+    // ---------------------------------------------
+    // Fetch products
+    // ---------------------------------------------
+    const products = await productsCol
+      .find(filter)
+      .sort(sortOption)
+      .toArray();
+
+    // ---------------------------------------------
+    // Render page
+    // ---------------------------------------------
     res.render("products-list", {
       title: "Products",
       products,
-      brand: req.query.brand || null,
-      user: req.session.user,
+      name,
+      brand,
+      budget,
+      sort, // <-- EJS will never error now
+      user: req.session.user
     });
+
   } catch (err) {
-    console.error("Error fetching products:", err);
-    res.render("error", {
-      title: "Products Error",
-      message: "Failed to fetch products.",
-      backLink: "/",
-      backText: "Back to Home",
+    console.error(err);
+    res.render("error", { 
+      title: "Error", 
+      message: "Failed to load products." 
     });
   }
 });
+// =====================================================
+// REAL-TIME AJAX PRODUCT SEARCH (Admin)
+// /products/admin/search
+// =====================================================
+router.get("/admin/search", isAdmin, async (req, res) => {
+  try {
+    const db = req.app.locals.client.db(req.app.locals.dbName);
+    const productsCol = db.collection("products");
 
+    const searchName = (req.query.name || "").trim();
+    const searchCategory = (req.query.category || "").trim();
+
+    const query = {};
+
+    if (searchName) {
+      query.name = { $regex: searchName, $options: "i" }; 
+    }
+
+    if (searchCategory) {
+      query.category = searchCategory;
+    }
+
+    const products = await productsCol
+      .find(query)
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    res.json({ success: true, products });
+
+  } catch (err) {
+    console.error("Live search error:", err);
+    res.json({ success: false, message: "Search failed." });
+  }
+});
 // =====================================================
 // ADMIN PRODUCT DASHBOARD — NEW (LESSON 22)
 // /admin/products
@@ -122,7 +214,6 @@ router.get("/admin/products", isAdmin, async (req, res) => {
     const db = req.app.locals.client.db(req.app.locals.dbName);
     const productsCol = db.collection("products");
 
-    // Search filters
     const searchName = (req.query.searchName || "").trim();
     const searchCategory = (req.query.searchCategory || "").trim();
 
@@ -138,7 +229,6 @@ router.get("/admin/products", isAdmin, async (req, res) => {
 
     const products = await productsCol.find(query).sort({ createdAt: -1 }).toArray();
 
-    // Success / Error Messages
     let message = null;
 
     if (req.query.success === "1") {
@@ -180,15 +270,13 @@ router.get("/add", isAdmin, (req, res) => {
   res.render("add-product", {
     title: "Add Product",
     user: req.session.user,
-    formData: null,   // FIX
-    errors: []        // optional but clean
+    formData: null,
+    errors: []
   });
 });
 
-
 router.post("/add", isAdmin, upload.single("image"), async (req, res) => {
   try {
-    // 1. VALIDATE
     const { errors, formData, priceNumber } = validateProductInput(req.body);
 
     if (errors.length > 0) {
@@ -203,7 +291,6 @@ router.post("/add", isAdmin, upload.single("image"), async (req, res) => {
     const db = req.app.locals.client.db(req.app.locals.dbName);
     const productsCol = db.collection("products");
 
-    // Sizes
     let formattedSizes = [];
     if (req.body.sizes) {
       formattedSizes = Object.values(req.body.sizes).map((s) => ({
@@ -224,15 +311,12 @@ router.post("/add", isAdmin, upload.single("image"), async (req, res) => {
       description: formData.description,
       imageUrl: req.file ? "/uploads/" + req.file.filename : "/images/placeholder-shoe.jpg",
       sizes: formattedSizes,
-      shippingInfo: req.body.shippingInfo || "Shipping usually takes 3–7 business days.",
-      returnsInfo: req.body.returnsInfo || "Returns accepted within 7 days.",
       createdAt: new Date(),
       updatedAt: new Date(),
     };
 
     await productsCol.insertOne(newProduct);
 
-    // SUCCESS REDIRECT
     res.redirect("/products/admin/products?success=1&action=created");
   } catch (err) {
     console.error("Add product error:", err);
@@ -284,7 +368,7 @@ router.get("/edit/:id", isAdmin, async (req, res) => {
 });
 
 // =====================================================
-// UPDATE PRODUCT (Admin) — WITH VALIDATION
+// UPDATE PRODUCT (Admin)
 // /products/edit/:id
 // =====================================================
 router.post("/edit/:id", isAdmin, upload.single("image"), async (req, res) => {
@@ -301,7 +385,6 @@ router.post("/edit/:id", isAdmin, upload.single("image"), async (req, res) => {
       return res.redirect("/admin/products?error=notfound");
     }
 
-    // VALIDATION
     const { errors, formData, priceNumber } = validateProductInput(req.body);
 
     if (errors.length > 0) {
@@ -314,19 +397,15 @@ router.post("/edit/:id", isAdmin, upload.single("image"), async (req, res) => {
       });
     }
 
-    // Update fields
     const updateData = {
       name: formData.name,
       brand: req.body.brand,
       category: formData.category,
       price: priceNumber,
       description: formData.description,
-      shippingInfo: req.body.shippingInfo || "",
-      returnsInfo: req.body.returnsInfo || "",
       updatedAt: new Date(),
     };
 
-    // Sizes
     let formattedSizes = [];
     if (req.body.sizes) {
       formattedSizes = Object.values(req.body.sizes).map((s) => ({
@@ -334,10 +413,10 @@ router.post("/edit/:id", isAdmin, upload.single("image"), async (req, res) => {
         stock: Number(s.stock) || 0,
       }));
     }
+
     updateData.sizes = formattedSizes;
     updateData.stock = formattedSizes.reduce((sum, s) => sum + s.stock, 0);
 
-    // Image change
     if (req.file) {
       if (
         product.imageUrl &&
@@ -355,12 +434,12 @@ router.post("/edit/:id", isAdmin, upload.single("image"), async (req, res) => {
     res.redirect("/products/admin/products?success=1&action=updated");
   } catch (err) {
     console.error("Edit product error:", err);
-    res.redirect("/admin/products?error=update_failed");
+    res.redirect("/products/admin/products?error=update_failed");
   }
 });
 
 // =====================================================
-// DELETE PRODUCT (Admin) — WITH SAFE DELETE
+// DELETE PRODUCT (Admin)
 // /products/delete/:id
 // =====================================================
 router.post("/delete/:id", isAdmin, async (req, res) => {
@@ -378,7 +457,6 @@ router.post("/delete/:id", isAdmin, async (req, res) => {
       return res.redirect("/products/admin/products?error=notfound");
     }
 
-    // SAFE DELETE CHECK
     const orderUsingProduct = await ordersCol.findOne({
       "items.productId": product.productId,
     });
@@ -387,7 +465,6 @@ router.post("/delete/:id", isAdmin, async (req, res) => {
       return res.redirect("/products/admin/products?error=cannot_delete_used");
     }
 
-    // Remove image file
     if (
       product.imageUrl &&
       product.imageUrl.startsWith("/uploads/") &&
@@ -408,7 +485,7 @@ router.post("/delete/:id", isAdmin, async (req, res) => {
 });
 
 // =====================================================
-// PUBLIC PRODUCT DETAIL
+// PUBLIC PRODUCT DETAIL (but admin is blocked above)
 // =====================================================
 router.get("/:id", async (req, res) => {
   try {
@@ -432,7 +509,6 @@ router.get("/:id", async (req, res) => {
       });
     }
 
-    // fallback sizes (same as your original)
     if (!product.sizes || product.sizes.length === 0) {
       const defaultSizes = ["US 6", "US 6.5", "US 7", "US 7.5", "US 8", "US 8.5", "US 9"];
       product.sizes = defaultSizes.map((label) => ({
@@ -441,7 +517,6 @@ router.get("/:id", async (req, res) => {
       }));
     }
 
-    // recommendations
     let recommendations = await productsCol
       .find({
         brand: product.brand,

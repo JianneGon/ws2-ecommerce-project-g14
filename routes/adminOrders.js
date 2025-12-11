@@ -4,7 +4,7 @@ const router = express.Router();
 const { isAdmin } = require("../middlewares/auth");
 
 // =======================
-// GET /admin/orders – list all orders (admin only)
+// GET /admin/orders – list all orders
 // =======================
 router.get("/orders", isAdmin, async (req, res) => {
   try {
@@ -12,30 +12,23 @@ router.get("/orders", isAdmin, async (req, res) => {
     const ordersCol = db.collection("orders");
     const usersCol = db.collection("users");
 
-    // Fetch all orders (newest first)
     const orders = await ordersCol
       .find({})
       .sort({ createdAt: -1 })
       .toArray();
 
-    // Collect unique userIds
     const userIds = [...new Set(orders.map(o => o.userId))];
 
-    // Fetch users
     const users = await usersCol
       .find({ userId: { $in: userIds } })
       .toArray();
 
-    // Build map of userId -> email
     const userMap = {};
-    users.forEach(u => {
-      userMap[u.userId] = u.email;
-    });
+    users.forEach(u => (userMap[u.userId] = u.email));
 
-    // Attach user email to each order
-    const result = orders.map(order => ({
-      ...order,
-      userEmail: userMap[order.userId] || order.email || "Unknown"
+    const result = orders.map(o => ({
+      ...o,
+      userEmail: userMap[o.userId] || o.email || "Unknown"
     }));
 
     res.render("admin-orders", {
@@ -56,16 +49,14 @@ router.get("/orders", isAdmin, async (req, res) => {
 });
 
 // =======================
-// GET /admin/orders/:orderId – single order details page
+// GET /admin/orders/:orderId – order details
 // =======================
 router.get("/orders/:orderId", isAdmin, async (req, res) => {
   try {
     const db = req.app.locals.client.db(req.app.locals.dbName);
     const ordersCol = db.collection("orders");
 
-    const order = await ordersCol.findOne({
-      orderId: req.params.orderId
-    });
+    const order = await ordersCol.findOne({ orderId: req.params.orderId });
 
     if (!order) {
       return res.status(404).render("error", {
@@ -79,7 +70,7 @@ router.get("/orders/:orderId", isAdmin, async (req, res) => {
     res.render("order-detail", {
       title: `Order ${order.orderId}`,
       order,
-      currentUser: req.session.user,
+      user: req.session.user,
       adminView: true,
     });
 
@@ -95,7 +86,8 @@ router.get("/orders/:orderId", isAdmin, async (req, res) => {
 });
 
 // =======================================================
-// POST /admin/orders/update/:orderId – update order status
+// POST /admin/orders/update/:orderId – UPDATE ORDER STATUS
+// OPTION A LOGIC: handles paid/unpaid properly
 // =======================================================
 router.post("/orders/update/:orderId", isAdmin, async (req, res) => {
   try {
@@ -104,17 +96,45 @@ router.post("/orders/update/:orderId", isAdmin, async (req, res) => {
 
     const newStatus = req.body.status;
 
+    // Fetch current order
+    const order = await ordersCol.findOne({ orderId: req.params.orderId });
+    if (!order) return res.redirect("/admin/orders?error=1");
+
+    let updatedFields = {
+      status: newStatus,
+      updatedAt: new Date(),
+    };
+
+    // ============================
+    // PAYMENT LOGIC FOR ADMINS
+    // ============================
+
+    // If admin sets order to "paid"
+    if (newStatus === "paid") {
+      updatedFields.paymentStatus = "paid";
+      updatedFields.paidAt = new Date();
+    }
+
+    // If admin sets order to cancelled/refund → unpaid
+    if (["cancelled", "refund"].includes(newStatus)) {
+      updatedFields.paymentStatus = "unpaid";
+      updatedFields.paidAt = null;
+    }
+
+    // If admin moves a paid order to shipping stages
+    if (["to_ship", "shipped", "to_receive", "completed"].includes(newStatus)) {
+      // Keep payment status if already paid
+      if (order.paymentStatus === "paid") {
+        updatedFields.paymentStatus = "paid";
+      }
+    }
+
     await ordersCol.updateOne(
       { orderId: req.params.orderId },
-      {
-        $set: {
-          status: newStatus,
-          updatedAt: new Date(),
-        },
-      }
+      { $set: updatedFields }
     );
 
-    res.redirect("/admin/orders?success=1");
+    return res.redirect(`/admin/orders/${req.params.orderId}?updated=1`);
 
   } catch (err) {
     console.error("Order status update error:", err);

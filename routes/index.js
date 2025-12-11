@@ -3,30 +3,37 @@ const router = express.Router();
 const { Resend } = require('resend');
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+// =============================================
+// MIDDLEWARE: Block Admin from Customer Pages
+// =============================================
+function blockAdmin(req, res, next) {
+  if (req.session?.user?.role === "admin") {
+    return res.redirect("/users/dashboard");
+  }
+  next();
+}
+
 // =======================
-// Home Page (with New Arrivals + Trending)
+// Home Page (Customer Only)
 // =======================
-router.get('/', async (req, res) => {
+router.get('/', blockAdmin, async (req, res) => {
   try {
     const db = req.app.locals.client.db(req.app.locals.dbName);
     const productsCollection = db.collection('products');
 
-    // Fetch up to 20 latest products (New Arrivals)
     const newArrivals = await productsCollection
       .find({})
       .sort({ createdAt: -1 })
       .limit(20)
       .toArray();
 
-    // Fetch up to 20 random products (Trending)
     const trending = await productsCollection
       .aggregate([{ $sample: { size: 20 } }])
       .toArray();
 
-    // Render homepage with both product groups
     res.render('index', {
       title: "Home Page",
-      user: req.session ? req.session.user : null,
+      user: req.session?.user || null,
       newArrivals,
       trending
     });
@@ -42,39 +49,37 @@ router.get('/', async (req, res) => {
 });
 
 // =======================
-// About Page (GET)
+// About Page (Customer Only)
 // =======================
-router.get('/about', (req, res) => {
+router.get('/about', blockAdmin, (req, res) => {
   res.render('about', {
     title: "About Us",
     name: "Commonwealth",
-    description: "We are an authentic sneaker reseller based in Manila, offering curated footwear from top global brands.",
-    user: req.session ? req.session.user : null
+    description: "We are an authentic sneaker reseller based in Manila.",
+    user: req.session?.user || null
   });
 });
 
-
 // =======================
-// Contact Page (GET)
+// Contact Page (Customer Only)
 // =======================
-router.get('/contact', (req, res) => {
+router.get('/contact', blockAdmin, (req, res) => {
   res.render('contact', {
     title: "Contact",
-    user: req.session ? req.session.user : null
+    user: req.session?.user || null
   });
 });
 
 // =======================
-// Contact Form Submission (POST)
+// Contact Form Submission (Customer Only)
 // =======================
-router.post('/contact', async (req, res) => {
+router.post('/contact', blockAdmin, async (req, res) => {
   try {
     const { name, email, phone, message } = req.body;
 
-    // Send email via Resend
     await resend.emails.send({
-      from: "onboarding@resend.dev",            // Verified sender domain
-      to: process.env.CONTACT_TO_EMAIL,         // Gmail recipient
+      from: "onboarding@resend.dev",
+      to: process.env.CONTACT_TO_EMAIL,
       subject: `New Contact Message from ${name}`,
       html: `
         <h2>Contact Form Submission</h2>
@@ -86,10 +91,9 @@ router.post('/contact', async (req, res) => {
       `
     });
 
-    // Success page
     res.render("success", {
       title: "Message Sent",
-      message: "Your message has been sent successfully. We'll get back to you shortly.",
+      message: "Your message has been sent successfully.",
       backLink: "/contact",
       backText: "Back to Contact"
     });
@@ -97,10 +101,9 @@ router.post('/contact', async (req, res) => {
   } catch (err) {
     console.error("❌ Error sending contact message:", err);
 
-    // Error page
     res.render("error", {
       title: "Contact Error",
-      message: "Something went wrong while sending your message. Please try again later.",
+      message: "Something went wrong while sending your message.",
       backLink: "/contact",
       backText: "Back to Contact"
     });
@@ -108,22 +111,22 @@ router.post('/contact', async (req, res) => {
 });
 
 // =======================
-// Terms & Conditions Page
+// Terms & Conditions Page (Customer Only)
 // =======================
-router.get('/terms', (req, res) => {
+router.get('/terms', blockAdmin, (req, res) => {
   res.render('terms', {
     title: "Terms & Conditions",
-    user: req.session ? req.session.user : null
+    user: req.session?.user || null
   });
 });
 
 // =======================
-// Privacy Policy Page
+// Privacy Policy Page (Customer Only)
 // =======================
-router.get('/privacy', (req, res) => {
+router.get('/privacy', blockAdmin, (req, res) => {
   res.render('privacy', {
     title: "Privacy Policy",
-    user: req.session ? req.session.user : null
+    user: req.session?.user || null
   });
 });
 

@@ -91,11 +91,11 @@ Items may be returned within <b>7 days</b> of delivery.<br>
 Products must be unused, in original packaging, and complete with all accessories.<br><br>
 
 For return assistance, please contact us at<br>
-<b>info@atmos.ph</b>.
+<b>info@commonwealth.ph</b>.
 `;
 
 // =======================
-// ✅ CART PERSISTENCE (NEW MIDDLEWARE)
+// CART PERSISTENCE (NEW MIDDLEWARE)
 // =======================
 app.use(async (req, res, next) => {
   try {
@@ -134,6 +134,7 @@ const cartRoute = require('./routes/cart');
 const ordersRoute = require('./routes/orders');
 const adminOrdersRoute = require('./routes/adminOrders');
 const adminReportsRoute = require("./routes/adminReports");
+const adminRoute = require('./routes/admin');
 
 
 // =======================
@@ -149,7 +150,7 @@ app.use('/cart', cartRoute);
 app.use('/orders', ordersRoute);
 app.use('/admin', adminOrdersRoute);
 app.use("/admin", adminReportsRoute);
-
+app.use("/admin", require("./routes/admin"));
 // General pages LAST
 app.use('/', indexRoute);      // homepage, shop, etc.
 app.use('/', infoRoute);       // about, contact, terms, privacy

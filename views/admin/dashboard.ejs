@@ -1,0 +1,269 @@
+<div class="admin-dashboard">
+
+  <!-- ===============================
+       ADMIN PROFILE HEADER (NEW STYLE)
+  ================================= -->
+  <div class="admin-profile-header new-admin-header">
+
+    <!-- AVATAR -->
+    <div class="admin-avatar admin-avatar-centered">
+      <% 
+        const initials = `${admin.firstName?.charAt(0) || ''}${admin.lastName?.charAt(0) || ''}`.toUpperCase(); 
+      %>
+      <span><%= initials %></span>
+    </div>
+
+    <!-- NAME + EMAIL + BADGES -->
+    <div class="admin-info-centered">
+      <h1 class="admin-name"><%= admin.firstName %> <%= admin.lastName %></h1>
+      <p class="admin-email"><%= admin.email %></p>
+
+      <div class="admin-badges-centered">
+        <span class="admin-badge role">Administrator</span>
+        <span class="admin-badge status active">Active account</span>
+
+        <% if (admin.isEmailVerified) { %>
+          <span class="admin-badge verified">Email verified</span>
+        <% } else { %>
+          <span class="admin-badge unverified">Not verified</span>
+        <% } %>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===============================
+       QUICK STATS ROW 1
+  ================================= -->
+  <div class="stats-grid-modern">
+
+    <a href="/products/admin/products" class="stat-card-modern minimal-card">
+      <div class="stat-icon-wrapper">
+        <span class="iconify icon" data-icon="mdi:package-variant"></span>
+        <span class="stat-badge" data-value="<%= totalProducts %>"><%= totalProducts %></span>
+      </div>
+      <div class="stat-label">Total Products</div>
+    </a>
+
+    <a href="/users/list" class="stat-card-modern minimal-card">
+      <div class="stat-icon-wrapper">
+        <span class="iconify icon" data-icon="mdi:account-outline"></span>
+        <span class="stat-badge" data-value="<%= totalUsers %>"><%= totalUsers %></span>
+      </div>
+      <div class="stat-label">Total Customers</div>
+    </a>
+
+    <a href="/admin/orders" class="stat-card-modern minimal-card">
+      <div class="stat-icon-wrapper">
+        <span class="iconify icon" data-icon="mdi:clipboard-text-outline"></span>
+        <span class="stat-badge" data-value="<%= totalOrders %>"><%= totalOrders %></span>
+      </div>
+      <div class="stat-label">Total Orders</div>
+    </a>
+
+    <a href="/admin/reports/sales" class="stat-card-modern minimal-card">
+      <div class="stat-icon-wrapper">
+        <span class="iconify icon" data-icon="mdi:cash-multiple"></span>
+        <span class="stat-badge" data-value="<%= totalRevenue %>">
+          <%= totalRevenue.toLocaleString() %>
+        </span>
+      </div>
+      <div class="stat-label">Total Revenue</div>
+    </a>
+
+  </div>
+
+  <!-- ===============================
+       RECENT ORDERS
+  ================================= -->
+  <h2 class="section-title">Recent Orders</h2>
+
+  <table class="recent-orders-table modern-table">
+    <thead>
+      <tr>
+        <th>Order ID</th>
+        <th>User</th>
+        <th>Status</th>
+        <th>Total</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <% recentOrders.forEach(o => { %>
+        <tr>
+          <td class="order-id"><%= o.orderId %></td>
+          <td><%= o.email %></td>
+
+          <td>
+            <span class="status-badge <%= o.status %>">
+              <%= o.status
+                    .replace("_", " ")
+                    .replace(/\b\w/g, c => c.toUpperCase()) %>
+            </span>
+          </td>
+
+          <td>₱<%= o.totalAmount.toLocaleString() %></td>
+          <td><%= o.createdAt.toLocaleString() %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+
+  <!-- ===============================
+       ANALYTICS GRID
+  ================================= -->
+  <h2 class="section-title">Sales & Orders Analytics</h2>
+
+  <div class="analytics-flex">
+
+      <!-- Revenue (Last 7 Days) -->
+      <div class="chart-card chart-large">
+          <h3>Revenue (Last 7 Days)</h3>
+          <canvas id="weeklyRevenueChart"></canvas>
+      </div>
+
+      <!-- Order Status Distribution -->
+      <div class="chart-card chart-small">
+          <h3>Order Status Distribution</h3>
+          <canvas id="orderStatusChart"></canvas>
+      </div>
+
+  </div>
+
+  <!-- ===============================
+       TOP PRODUCTS + MONTHLY REVENUE
+  ================================= -->
+  <div class="analytics-row swapped-layout">
+
+    <!-- Top Selling Products -->
+    <div class="analytics-card big-left">
+      <h3>Top Selling Products</h3>
+
+      <% if (topProducts.length === 0) { %>
+        <p>No completed orders yet.</p>
+      <% } else { %>
+        <table class="top-products-table">
+          <tr>
+            <th>Product</th>
+            <th>Qty</th>
+            <th>Total Revenue</th>
+          </tr>
+
+          <% topProducts.forEach(p => { %>
+            <tr>
+              <td><%= p.name %></td>
+              <td><%= p.totalQty %></td>
+              <td>₱<%= p.totalRevenue.toLocaleString() %></td>
+            </tr>
+          <% }) %>
+        </table>
+      <% } %>
+    </div>
+
+    <!-- Monthly Revenue -->
+    <div class="analytics-card small-right">
+      <h3>Monthly Revenue (Last 12 Months)</h3>
+      <canvas id="monthlyRevenueChart"></canvas>
+    </div>
+
+  </div>
+
+  <!-- ===============================
+       MANAGE SYSTEM (ADMIN CARDS)
+  ================================= -->
+  <h2 class="section-title">Manage System</h2>
+
+  <div class="admin-menu enhanced-admin-menu">
+
+    <a href="/products/admin/products" class="admin-card enhanced-card">
+      <div class="admin-card-icon">📦</div>
+      <h3>Manage Products</h3>
+      <p>Edit, add, delete, or search products.</p>
+    </a>
+
+    <a href="/users/list" class="admin-card enhanced-card">
+      <div class="admin-card-icon">👥</div>
+      <h3>Manage Users</h3>
+      <p>View and manage customer accounts.</p>
+    </a>
+
+    <a href="/admin/orders" class="admin-card enhanced-card">
+      <div class="admin-card-icon">🧾</div>
+      <h3>Orders</h3>
+      <p>View, filter, and update customer orders.</p>
+    </a>
+
+    <a href="/admin/reports/sales" class="admin-card enhanced-card">
+      <div class="admin-card-icon">📊</div>
+      <h3>Sales Reports</h3>
+      <p>View sales charts and export PDF.</p>
+    </a>
+
+  </div>
+
+</div>
+
+<!-- ===============================
+     CHART JS
+================================= -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  const last7DaysLabels = <%- JSON.stringify(last7Days) %>;
+  const revenue7DaysData = <%- JSON.stringify(revenue7Days) %>;
+  const monthLabels = <%- JSON.stringify(monthLabels) %>;
+  const monthlyRevenueData = <%- JSON.stringify(monthlyRevenue) %>;
+</script>
+
+<script>
+  /* ORDER STATUS PIE */
+  new Chart(document.getElementById("orderStatusChart"), {
+    type: "pie",
+    data: {
+      labels: ["To Pay", "To Ship", "To Receive", "Completed", "Refund", "Cancelled"],
+      datasets: [{
+        data: [
+          <%= statusCounts.to_pay %>,
+          <%= statusCounts.to_ship %>,
+          <%= statusCounts.to_receive %>,
+          <%= statusCounts.completed %>,
+          <%= statusCounts.refund %>,
+          <%= statusCounts.cancelled %>
+        ],
+        backgroundColor: ["#ffcc00","#33a6ff","#c266ff","#33cc66","#ff6666","#999999"]
+      }]
+    }
+  });
+
+  /* WEEKLY REVENUE LINE */
+  new Chart(document.getElementById("weeklyRevenueChart"), {
+    type: "line",
+    data: {
+      labels: last7DaysLabels,
+      datasets: [{
+        label: "₱ Revenue",
+        data: revenue7DaysData,
+        borderColor: "#007bff",
+        backgroundColor: "rgba(0,123,255,0.2)",
+        tension: 0.3,
+        fill: true
+      }]
+    }
+  });
+
+  /* MONTHLY REVENUE BAR */
+  new Chart(document.getElementById("monthlyRevenueChart"), {
+    type: "bar",
+    data: {
+      labels: monthLabels,
+      datasets: [{
+        label: "₱ Revenue",
+        data: monthlyRevenueData,
+        backgroundColor: "rgba(40,167,69,0.5)",
+        borderColor: "#28a745",
+        borderWidth: 1
+      }]
+    }
+  });
+</script>

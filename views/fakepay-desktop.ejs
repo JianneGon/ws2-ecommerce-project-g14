@@ -1,0 +1,142 @@
+<h1 class="page-title">Pay with GCash</h1>
+
+<style>
+  .fakepay-header {
+    padding: 14px 24px;
+    color: #666;
+    font-size: 1.3rem;
+    font-weight: 600;
+    text-align: center;
+    margin-top: 10px;
+  }
+
+  .fakepay-body {
+    margin: 40px auto;
+    max-width: 1000px;
+    display: flex;
+    gap: 50px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .fakepay-left {
+    flex: 0 0 260px;
+    text-align: center;
+    border-right: 1px solid #ddd;
+    padding-right: 32px;
+  }
+
+  .fakepay-left img {
+    width: 240px;
+    height: 240px;
+  }
+
+  .fakepay-mobile-link {
+    margin-top: 10px;
+    font-size: 0.82rem;
+    word-break: break-all;
+  }
+
+  .fakepay-right {
+    flex: 1;
+    padding-left: 30px;
+  }
+
+  .label {
+    font-size: 0.85rem;
+    color: #555;
+    margin-top: 10px;
+  }
+
+  .value {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-top: 2px;
+  }
+
+  .amount-value {
+    font-size: 1.9rem;
+    font-weight: 700;
+    margin: 8px 0;
+  }
+
+  .status-text {
+    margin-top: 12px;
+    font-size: 0.95rem;
+  }
+
+  .waiting { color: #d38700; }
+  .paid { color: #1c9c4d; font-weight: 700; }
+</style>
+
+<!-- HEADER -->
+<div class="fakepay-header">
+  Commonwealth Secure Payment • GCash
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="fakepay-body">
+
+  <!-- LEFT: QR CODE -->
+  <div class="fakepay-left">
+    <img src="<%= qrDataUrl %>" alt="QR Code">
+    <p>Scan this QR with your phone to continue payment.</p>
+
+    <p class="fakepay-mobile-link">
+      Or open directly:<br>
+      <a href="<%= mobileUrl %>" target="_blank"><%= mobileUrl %></a>
+    </p>
+  </div>
+
+  <!-- RIGHT: ORDER INFO -->
+  <div class="fakepay-right">
+
+    <div class="label">Order ID</div>
+    <div class="value"><%= order.orderId %></div>
+
+    <div class="label">Amount to Pay</div>
+    <div class="amount-value">₱<%= Number(order.totalAmount).toLocaleString() %></div>
+
+    <div class="label">Merchant</div>
+    <div class="value">Commonwealth Official Store</div>
+
+    <div id="statusText" class="status-text waiting">
+      Waiting for payment...
+    </div>
+
+    <p style="margin-top:20px; font-size:0.85rem; color:#777;">
+      Do not close this page. It will redirect automatically when your payment is confirmed.
+    </p>
+
+  </div>
+</div>
+
+<!-- POLLING SCRIPT -->
+<script>
+  const orderId = "<%= order.orderId %>";
+  const statusText = document.getElementById("statusText");
+
+  async function pollStatus() {
+    try {
+      const res = await fetch(`/orders/pay/status/${orderId}`);
+      if (!res.ok) return;
+
+      const data = await res.json();
+
+      if (data.paid) {
+        statusText.textContent = "Payment received! Redirecting...";
+        statusText.classList.remove("waiting");
+        statusText.classList.add("paid");
+
+        setTimeout(() => {
+          window.location.href = data.redirectUrl;
+        }, 1200);
+      }
+    } catch (err) {
+      console.log("Polling error:", err);
+    }
+  }
+
+  // Poll every 2.5 seconds
+  setInterval(pollStatus, 2500);
+</script>

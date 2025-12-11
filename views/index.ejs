@@ -38,30 +38,39 @@
       <div class="tab-indicator"></div>
     </div>
 
-    <!-- NEW ARRIVALS TAB -->
+    <!-- ==============================
+         NEW ARRIVALS TAB
+    =============================== -->
     <div id="new" class="tab-content active">
       <% if (newArrivals && newArrivals.length > 0) { %>
         <div class="carousel-wrapper">
           <button class="carousel-btn prev" onclick="changeSlide('new', -1)">‹</button>
 
-          <!-- Added viewport wrapper -->
           <div class="carousel-viewport">
             <div class="carousel new-carousel">
               <% newArrivals.forEach(product => { %>
                 <div class="carousel-item">
-                  <img 
-                    src="<%= product.imageUrl %>" 
-                    alt="<%= product.name %>"
-                    onerror="this.onerror=null; this.src='/images/placeholder-shoe.jpg';"
+                  <a 
+                    href="<%= (user && user.isAdmin) 
+                             ? '/products/edit/' + product.productId 
+                             : '/products/' + product.productId 
+                          %>"
+                    class="product-link"
+                    style="text-decoration: none; color: inherit;"
                   >
-                  <h3><%= product.name %></h3>
-                  <p class="brand"><%= product.brand %></p>
-                  <p class="price">₱<%= product.price.toLocaleString() %></p>
+                    <img 
+                      src="<%= product.imageUrl %>" 
+                      alt="<%= product.name %>"
+                      onerror="this.onerror=null; this.src='/images/placeholder-shoe.jpg';"
+                    >
+                    <h3><%= product.name %></h3>
+                    <p class="brand"><%= product.brand %></p>
+                    <p class="price">₱<%= product.price.toLocaleString() %></p>
+                  </a>
                 </div>
               <% }) %>
             </div>
           </div>
-          <!-- End viewport wrapper -->
 
           <button class="carousel-btn next" onclick="changeSlide('new', 1)">›</button>
         </div>
@@ -70,30 +79,39 @@
       <% } %>
     </div>
 
-    <!-- TRENDING TAB -->
+    <!-- ==============================
+         TRENDING TAB
+    =============================== -->
     <div id="trend" class="tab-content">
       <% if (trending && trending.length > 0) { %>
         <div class="carousel-wrapper">
           <button class="carousel-btn prev" onclick="changeSlide('trend', -1)">‹</button>
 
-          <!-- Added viewport wrapper -->
           <div class="carousel-viewport">
             <div class="carousel trend-carousel">
               <% trending.forEach(product => { %>
                 <div class="carousel-item">
-                  <img 
-                    src="<%= product.imageUrl %>" 
-                    alt="<%= product.name %>"
-                    onerror="this.onerror=null; this.src='/images/placeholder-shoe.jpg';"
+                  <a 
+                    href="<%= (user && user.isAdmin) 
+                             ? '/products/edit/' + product.productId 
+                             : '/products/' + product.productId 
+                          %>"
+                    class="product-link"
+                    style="text-decoration: none; color: inherit;"
                   >
-                  <h3><%= product.name %></h3>
-                  <p class="brand"><%= product.brand %></p>
-                  <p class="price">₱<%= product.price.toLocaleString() %></p>
+                    <img 
+                      src="<%= product.imageUrl %>" 
+                      alt="<%= product.name %>"
+                      onerror="this.onerror=null; this.src='/images/placeholder-shoe.jpg';"
+                    >
+                    <h3><%= product.name %></h3>
+                    <p class="brand"><%= product.brand %></p>
+                    <p class="price">₱<%= product.price.toLocaleString() %></p>
+                  </a>
                 </div>
               <% }) %>
             </div>
           </div>
-          <!-- End viewport wrapper -->
 
           <button class="carousel-btn next" onclick="changeSlide('trend', 1)">›</button>
         </div>
@@ -109,8 +127,8 @@
   </section>
 
   <!-- ==============================
-     BRAND SHOWCASE SECTION
-  ============================== -->
+       BRAND SHOWCASE SECTION
+  =============================== -->
 <section class="brand-showcase">
   <div class="brand-box">
     <img src="/images/brand-nike.jpg" alt="Nike">

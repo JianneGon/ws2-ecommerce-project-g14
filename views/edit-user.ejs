@@ -39,6 +39,12 @@
       font-size: 0.95rem;
     }
 
+    .edit-container input[readonly],
+    .edit-container input[disabled] {
+      background: #f7f7f7;
+      cursor: not-allowed;
+    }
+
     .edit-container button {
       margin-top: 20px;
       width: 100%;
@@ -55,14 +61,15 @@
     .edit-container button:hover {
       background: #003fcc;
     }
+
     .success-message {
-  background: #d4edda;
-  color: #155724;
-  padding: 10px 15px;
-  border-radius: 6px;
-  margin-bottom: 15px;
-  border: 1px solid #c3e6cb;
-}
+      background: #d4edda;
+      color: #155724;
+      padding: 10px 15px;
+      border-radius: 6px;
+      margin-bottom: 15px;
+      border: 1px solid #c3e6cb;
+    }
   </style>
 </head>
 
@@ -71,32 +78,32 @@
   <div class="edit-container">
 
     <h1><%= loggedInUser.role === "admin" ? "Edit User" : "Edit Profile" %></h1>
-        <% if (typeof updated !== "undefined" && updated === "1") { %>
+
+    <% if (typeof updated !== "undefined" && updated === "1") { %>
       <div class="success-message">
         Profile updated successfully!
       </div>
     <% } %>
 
-
     <form action="/users/edit/<%= (user.userId || (user._id && user._id.toString())) %>" method="POST">
 
-      <!-- First Name -->
+      <!-- First Name (NOT EDITABLE) -->
       <label>First Name</label>
-      <input type="text" name="firstName" value="<%= user.firstName %>" required>
+      <input type="text" value="<%= user.firstName %>" readonly disabled>
 
-      <!-- Last Name -->
+      <!-- Last Name (NOT EDITABLE) -->
       <label>Last Name</label>
-      <input type="text" name="lastName" value="<%= user.lastName %>" required>
+      <input type="text" value="<%= user.lastName %>" readonly disabled>
 
-      <!-- Email -->
+      <!-- Email (NOT EDITABLE) -->
       <label>Email</label>
-      <input type="email" name="email" value="<%= user.email %>" required>
+      <input type="email" value="<%= user.email %>" readonly disabled>
 
-      <!-- OPTIONAL — Contact Number -->
+      <!-- Contact Number (EDITABLE) -->
       <label>Contact Number (optional)</label>
       <input type="text" name="contactNumber" value="<%= user.contactNumber || '' %>">
 
-      <!-- OPTIONAL — Address -->
+      <!-- Address (EDITABLE) -->
       <label>Address (optional)</label>
       <input type="text" name="address" value="<%= user.address || '' %>">
 

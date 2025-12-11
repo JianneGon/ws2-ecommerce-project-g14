@@ -1,14 +1,42 @@
-<% if (brand) { %>
-  <h1 class="products-page-title"><%= brand %> Shoes</h1>
-<% } else { %>
-  <h1 class="products-page-title">Unbox Your Next Pair</h1>
-<% } %>
+<!-- ===== SEARCH & SORT FORM ===== -->
+<form method="GET" action="/products" style="margin-bottom:20px;">
+  <!-- Search by Product Name -->
+  <input
+    type="text"
+    name="name"
+    placeholder="Search by product name"
+    value="<%= typeof name !== 'undefined' ? name : '' %>"
+    style="padding:5px; margin-right:5px;"
+  />
+
+  <!-- Filter by Brand -->
+  <select name="brand" style="padding:5px; margin-right:5px;">
+    <option value="">All Brands</option>
+    <option value="Nike" <%= brand === 'Nike' ? 'selected' : '' %>>Nike</option>
+    <option value="Puma" <%= brand === 'Puma' ? 'selected' : '' %>>Puma</option>
+    <option value="Asics" <%= brand === 'Asics' ? 'selected' : '' %>>Asics</option>
+    <option value="Salomon" <%= brand === 'Salomon' ? 'selected' : '' %>>Salomon</option>
+    <option value="New Balance" <%= brand === 'New Balance' ? 'selected' : '' %>>New Balance</option>
+    <option value="Vans" <%= brand === 'Vans' ? 'selected' : '' %>>Vans</option>
+  </select>
+
+  <!-- Sort by Price -->
+  <select name="sort" style="padding:5px; margin-right:5px;">
+    <option value="">Sort by Price</option>
+    <option value="price_asc" <%= sort === 'price_asc' ? 'selected' : '' %>>Low to High</option>
+    <option value="price_desc" <%= sort === 'price_desc' ? 'selected' : '' %>>High to Low</option>
+  </select>
+
+  <button type="submit" style="padding:5px 10px;">Search</button>
+</form>
+
+
+<!-- ===== PAGE TITLE ===== -->
+<h1 class="products-page-title">Unbox Your Next Pair</h1>
 
 <div class="product-grid">
   <% products.forEach(product => { %>
-
     <div class="product-item">
-
       <!-- CLICKABLE IMAGE -->
       <a href="/products/<%= product.productId %>">
         <img 
@@ -26,10 +54,8 @@
 
       <!-- PRICE -->
       <p class="product-price">
-        ₱<%= product.price.toFixed(2) %>
+        ₱<%= Number(product.price).toLocaleString() %>
       </p>
-
     </div>
-
   <% }) %>
 </div>
