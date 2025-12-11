@@ -71,20 +71,20 @@ router.get("/", isAuthenticated, blockAdmin, (req, res) => {
 });
 
 // =======================
-// POST /cart/add  (AJAX-friendly)
+// POST /cart/add (AJAX-friendly)
 // =======================
 router.post("/add", blockAdmin, async (req, res) => {
-  const wantsJSON =
-    req.headers.accept && req.headers.accept.includes("application/json");
+  const wantsJSON = req.headers.accept?.includes("application/json");
 
   try {
     initCart(req);
 
     if (!req.body || Object.keys(req.body).length === 0) {
       if (wantsJSON) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Empty request body" });
+        return res.status(400).json({
+          success: false,
+          message: "Empty request body",
+        });
       }
       return res.redirect("back");
     }
@@ -181,11 +181,10 @@ router.post("/add", blockAdmin, async (req, res) => {
 });
 
 // =======================
-// POST /cart/update
+// POST /cart/update (AJAX-aware)
 // =======================
 router.post("/update", isAuthenticated, blockAdmin, async (req, res) => {
-  const wantsJSON =
-    req.headers.accept && req.headers.accept.includes("application/json");
+  const wantsJSON = req.headers.accept?.includes("application/json");
 
   try {
     initCart(req);
@@ -252,11 +251,10 @@ router.post("/update", isAuthenticated, blockAdmin, async (req, res) => {
 });
 
 // =======================
-// POST /cart/remove
+// POST /cart/remove (AJAX-aware)
 // =======================
 router.post("/remove", isAuthenticated, blockAdmin, async (req, res) => {
-  const wantsJSON =
-    req.headers.accept && req.headers.accept.includes("application/json");
+  const wantsJSON = req.headers.accept?.includes("application/json");
 
   try {
     initCart(req);
@@ -384,7 +382,7 @@ router.get("/checkout", isAuthenticated, blockAdmin, (req, res) => {
 });
 
 // =======================
-// POST /cart/checkout  (UPDATED FOR OPTION A)
+// POST /cart/checkout
 // =======================
 router.post("/checkout", isAuthenticated, blockAdmin, async (req, res) => {
   try {
@@ -452,33 +450,23 @@ router.post("/checkout", isAuthenticated, blockAdmin, async (req, res) => {
     const now = new Date();
     const user = req.session.user;
 
-    // =====================================================
-    // PAYMENT LOGIC (CARD + GCASH = PAID)
-    // =====================================================
+    // PAYMENT LOGIC
+    let orderStatus = "to_pay";
+    let paymentStatus = "unpaid";
+    let paidAt = null;
 
-let orderStatus = "to_pay";      // default
-let paymentStatus = "unpaid";    // default
-let paidAt = null;
-
-// CARD PAYMENT → auto-paid (demo setup)
-if (paymentMethod === "card") {
-  orderStatus = "to_ship";
-  paymentStatus = "paid";
-  paidAt = new Date();
-}
-
-// GCASH → SHOULD NOT BE PAID YET
-else if (paymentMethod === "gcash") {
-  orderStatus = "to_pay";        // waiting for phone payment
-  paymentStatus = "pending";     // NOT PAID YET
-  paidAt = null;
-}
-
-// COD → cash on delivery
-else if (paymentMethod === "cod") {
-  orderStatus = "to_ship";
-  paymentStatus = "unpaid";
-}
+    if (paymentMethod === "card") {
+      orderStatus = "to_ship";
+      paymentStatus = "paid";
+      paidAt = new Date();
+    } else if (paymentMethod === "gcash") {
+      orderStatus = "to_pay";
+      paymentStatus = "pending";
+      paidAt = null;
+    } else if (paymentMethod === "cod") {
+      orderStatus = "to_ship";
+      paymentStatus = "unpaid";
+    }
 
     const order = {
       orderId,
@@ -496,14 +484,11 @@ else if (paymentMethod === "cod") {
         postalCode,
         phone,
       },
-
-      // UPDATED VALUES
       status: orderStatus,
       paymentMethod,
       paymentStatus,
       paidAt,
       gcashNumber: paymentMethod === "gcash" ? gcashNumber : null,
-
       createdAt: now,
       updatedAt: now,
     };

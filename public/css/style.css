@@ -3369,18 +3369,18 @@ html, body {
   transition: background 0.2s ease;
 }
 
-/* Order ID styling */
+/* ============================================================
+   ORDER ID TEXT
+============================================================ */
 .order-id-text {
   font-family: "Courier New", monospace;
   font-size: 0.85rem;
   color: #444;
 }
 
-/* ======================
-   STATUS BADGES
-=========================*/
-
-/* Base badge styling */
+/* ============================================================
+   STATUS BADGES — UNIVERSAL BASE STYLE
+============================================================ */
 .status-badge {
   display: inline-block;
   padding: 6px 14px;
@@ -3391,6 +3391,8 @@ html, body {
   min-width: 85px;
   text-transform: capitalize;
 }
+
+/* OLD COLOR SET (ADMIN STYLE — KEEPED) */
 .status-badge.badge-paid {
   background: #d4ffd6 !important;
   color: #0b7720 !important;
@@ -3431,10 +3433,43 @@ html, body {
   color: #7b00b3 !important;
 }
 
+/* ============================================================
+   USER ORDER LIST STYLE (to_pay / to_ship / completed, etc.)
+============================================================ */
+.status-badge.to_pay {
+  background: #ff6b6b;
+  color: #fff;
+}
 
-/* ======================
-   VIEW BUTTON
-=========================*/
+.status-badge.to_ship {
+  background: #ffa94d;
+  color: #fff;
+}
+
+.status-badge.to_receive {
+  background: #4dabf7;
+  color: #fff;
+}
+
+.status-badge.completed {
+  background: #51cf66;
+  color: #fff;
+}
+
+.status-badge.refund,
+.status-badge.return {
+  background: #845ef7;
+  color: #fff;
+}
+
+.status-badge.cancelled {
+  background: #868e96;
+  color: #fff;
+}
+
+/* ============================================================
+   ORDER VIEW / DETAILS BUTTON
+============================================================ */
 .order-view-btn {
   background: #0055ff;
   padding: 8px 14px;
@@ -3448,6 +3483,24 @@ html, body {
 
 .order-view-btn:hover {
   background: #003fcc;
+}
+
+/* ============================================================
+   DETAILS LINK (User)
+============================================================ */
+.order-details-link {
+  color: #0055ff;
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+
+/* ============================================================
+   ROW HOVER EFFECT
+============================================================ */
+.orders-row:hover {
+  background: #f9f9f9;
+  transition: background 0.2s ease;
 }
 
 /* ======================
@@ -6447,4 +6500,3 @@ td.actions-cell .table-actions {
     font-size: 1.4rem;
   }
 }
-
